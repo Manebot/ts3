@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <repositories>
+        <repository>
+            <id>public</id>
+            <name>Team Lixo public release repository</name>
+            <url>https://maven.teamlixo.net/repository/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>tomp2p.net</id>
+            <name>tomp2p</name>
+            <url>http://tomp2p.net/dev/mvn/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>public-releases</id>
+            <name>Team Lixo public release repository</name>
+            <url>https://maven.teamlixo.net/repository/public-releases/</url>
+            <uniqueVersion>true</uniqueVersion>
+        </repository>
+        <snapshotRepository>
+            <id>private-snapshots</id>
+            <name>Team Lixo public release snapshots</name>
+            <url>https://maven.teamlixo.net/repository/public-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <groupId>io.manebot.plugin</groupId>
+    <artifactId>ts3</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.manebot</groupId>
+            <artifactId>manebot-core</artifactId>
+            <version>0.1.6.17</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.manebot.plugin</groupId>
+            <artifactId>audio</artifactId>
+            <version>0.1.9.8</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.manevolent</groupId>
+            <artifactId>ts3j</artifactId>
+            <version>51aac79</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ullink.slack</groupId>
+            <artifactId>simpleslackapi</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+    </dependencies>
+</project>
