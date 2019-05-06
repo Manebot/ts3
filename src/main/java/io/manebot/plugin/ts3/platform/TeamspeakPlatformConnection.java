@@ -289,7 +289,7 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
 
         @Override
         public AudioChannel getChannel(Chat chat) {
-            if (chat instanceof TeamspeakChannelChat) {
+            if (chat instanceof TeamspeakChat) {
                 TeamspeakServer server = ((TeamspeakChannelChat) chat).getServer();
                 if (!server.isEnabled())
                     return null;
