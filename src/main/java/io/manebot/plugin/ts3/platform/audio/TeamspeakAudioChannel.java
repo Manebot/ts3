@@ -71,7 +71,7 @@ public class TeamspeakAudioChannel extends AudioChannel {
         if (channel == null) return null;
 
         return getPlatform().getPlugin().getBot().getConversationProvider()
-                .getConversationByChat(serverConnection.getChat(channel));
+                .getConversationByChat(serverConnection.getChannelChat(channel));
     }
 
     @Override
