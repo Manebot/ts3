@@ -565,7 +565,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
     @Override
     public void onChannelPassivated(AudioChannel channel) {
-        // Move to lobby
+        schedule();
     }
 
     public Chat getServerChat() {
@@ -783,7 +783,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                     TeamspeakChannel channel = client.getChannel();
 
                     if (awayChannel != null && channel != null &&
-                            channel.getChannelId() == awayChannel.getChannelId()) {
+                            channel.getChannelId() != awayChannel.getChannelId()) {
                         moveClient(client, newChannel);
                     }
                 }
@@ -803,7 +803,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                     TeamspeakChannel channel = client.getChannel();
 
                     if (lobbyChannel != null && channel != null &&
-                            channel.getChannelId() == lobbyChannel.getChannelId()) {
+                            channel.getChannelId() != lobbyChannel.getChannelId()) {
                         moveClient(client, newChannel);
                     }
                 }
