@@ -23,6 +23,7 @@ import io.manebot.plugin.ts3.platform.server.model.TeamspeakClient;
 import io.manebot.plugin.ts3.platform.user.TeamspeakPlatformUser;
 
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -40,7 +41,7 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
     private final ServerManager serverManager;
 
     private final List<TeamspeakServerConnection> connections = new LinkedList<>();
-    private final Object securityLevelLock = new Object();
+    private final Object identityLock = new Object();
 
     public TeamspeakPlatformConnection(Platform platform, Audio audio) {
         this.platform = platform;
@@ -110,18 +111,33 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
      * @throws IllegalArgumentException
      */
     public LocalIdentity getIdentity() throws IllegalArgumentException {
-        String identity = plugin.getProperty("identity");
-        if (identity == null) throw new IllegalArgumentException("Missing bot client Teamspeak3 identity");
-        byte[] identityBytes = Base64.getDecoder().decode(identity);
-        LocalIdentity localIdentity = LocalIdentity.load(new BigInteger(identityBytes));
+        synchronized (identityLock) {
+            String identity = plugin.getProperty("identity");
 
-        String keyOffsetString = plugin.getProperty("keyOffset");
-        long keyOffset = 0L;
-        if (keyOffsetString != null) {
-             keyOffset = Long.parseLong(keyOffsetString);
-        }
+            if (identity == null) {
+                plugin.getLogger().warning("Identity missing; generating new Teamspeak3 identity...");
 
-        synchronized (securityLevelLock) { // prevent multiple threads from fighting and causing unnecessary CPU
+                try {
+                    identity = Base64.getEncoder().encodeToString(
+                            LocalIdentity.generateNew(0).getPrivateKey().toByteArray()
+                    );
+                } catch (GeneralSecurityException e) {
+                    throw new IllegalArgumentException(e);
+                }
+
+                plugin.getRegistration().setProperty("identity", identity);
+            }
+
+            byte[] identityBytes = Base64.getDecoder().decode(identity);
+            LocalIdentity localIdentity = LocalIdentity.load(new BigInteger(identityBytes));
+
+            String keyOffsetString = plugin.getProperty("keyOffset");
+            long keyOffset = 0L;
+            if (keyOffsetString != null) {
+                 keyOffset = Long.parseLong(keyOffsetString);
+            }
+
+            // prevent multiple threads from fighting and causing unnecessary CPU
             int securityLevel = Integer.parseInt(plugin.getProperty("securityLevel", "10"));
             if (securityLevel > localIdentity.getSecurityLevel()) {
                 plugin.getLogger().warning(
@@ -133,12 +149,12 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
                 keyOffset = localIdentity.getKeyOffset();
                 plugin.getRegistration().setProperty("keyOffset", Long.toString(keyOffset));
             }
+
+            localIdentity.setKeyOffset(keyOffset);
+            localIdentity.setLastCheckedKeyOffset(keyOffset);
+
+            return localIdentity;
         }
-
-        localIdentity.setKeyOffset(keyOffset);
-        localIdentity.setLastCheckedKeyOffset(keyOffset);
-
-        return localIdentity;
     }
 
     public AudioConnection getAudioConnection() {
