@@ -93,17 +93,17 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
     private LocalTeamspeakClientSocket createClientSocket() {
         LocalTeamspeakClientSocket clientSocket = new LocalTeamspeakClientSocket();
 
-        this.client.setCommandExecutorService(Executors.newSingleThreadExecutor(
+        clientSocket.setCommandExecutorService(Executors.newSingleThreadExecutor(
                 Virtual.getInstance().currentProcess().newThreadFactory()
         ));
 
-        this.client.setExceptionHandler(
+        clientSocket.setExceptionHandler(
                 throwable -> Logger.getGlobal().log(Level.WARNING, "Problem in TS3J", throwable)
         );
 
-        this.client.addListener(this);
+        clientSocket.addListener(this);
 
-        this.client.setNickname(server.getDisplayName() == null ? "Bot" : server.getDisplayName());
+        clientSocket.setNickname(server.getDisplayName() == null ? "Bot" : server.getDisplayName());
 
         return clientSocket;
     }

@@ -118,7 +118,7 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
 
     @Command(description = "Disables a server", permission = "teamspeak.server.disable")
     public void disable(CommandSender sender,
-                       @CommandArgumentLabel.Argument(label = "enable") String disable,
+                       @CommandArgumentLabel.Argument(label = "disable") String disable,
                        @CommandArgumentString.Argument(label = "id") String id)
             throws CommandExecutionException {
         id = id.toLowerCase().trim();
