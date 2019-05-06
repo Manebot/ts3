@@ -1,6 +1,7 @@
 package io.manebot.plugin.ts3;
 
 import io.manebot.artifact.ManifestIdentifier;
+import io.manebot.command.executor.CommandExecutor;
 import io.manebot.database.Database;
 import io.manebot.plugin.Plugin;
 import io.manebot.plugin.PluginException;
@@ -15,6 +16,7 @@ import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;
 import io.manebot.virtual.Virtual;
 
 import java.util.Arrays;
+import java.util.function.Function;
 import java.util.logging.Level;
 
 public class Entry implements PluginEntry {
@@ -29,7 +31,10 @@ public class Entry implements PluginEntry {
 
         builder.setInstance(ServerManager.class, plugin -> new ServerManager(database));
 
-        builder.addCommand(Arrays.asList("teamspeak", "ts"), new TeamspeakCommand());
+        builder.addCommand(
+                Arrays.asList("teamspeak", "ts"),
+                future -> new TeamspeakCommand(future.getPlugin().getInstance(ServerManager.class))
+        );
 
         builder.addPlatform(platformBuilder -> {
             platformBuilder.setId("ts3").setName("Teamspeak3");
@@ -46,6 +51,7 @@ public class Entry implements PluginEntry {
 
             final TeamspeakPlatformConnection platformConnection = new TeamspeakPlatformConnection(
                     platformBuilder.getPlatform(),
+                    platformBuilder.getPlugin(),
                     audio
             );
 

@@ -43,9 +43,9 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
     private final List<TeamspeakServerConnection> connections = new LinkedList<>();
     private final Object identityLock = new Object();
 
-    public TeamspeakPlatformConnection(Platform platform, Audio audio) {
+    public TeamspeakPlatformConnection(Platform platform, Plugin plugin, Audio audio) {
         this.platform = platform;
-        this.plugin = platform.getPlugin();
+        this.plugin = plugin;
 
         this.audio = audio;
         this.audioConnection = new TeamspeakAudioConnection(audio);
