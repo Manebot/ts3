@@ -400,10 +400,18 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         return getClients()
                 .stream()
                 .filter(x -> x.getUid().equals(uid))
-                .findFirst()
+                .max(Comparator.comparingLong(TeamspeakClient::getLastActivity))
                 .orElseThrow(() -> new IllegalArgumentException(
                         "client UID not found: " + uid)
                 );
+    }
+
+    public Collection<TeamspeakClient> findClients(Uid uid)
+            throws IllegalArgumentException {
+        return getClients()
+                .stream()
+                .filter(x -> x.getUid().equals(uid))
+                .collect(Collectors.toList());
     }
 
     public TeamspeakClient findClientById(int id)
@@ -422,6 +430,34 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         if (self == null) return null;
 
         return self.getChannel();
+    }
+
+    public void sendServerMessage(String message) throws IOException {
+        try {
+            client.sendServerMessage(message);
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    public void sendPrivateMessage(Uid uid, String message) throws IOException {
+        try {
+            for (TeamspeakClient client : findClients(uid))
+                this.client.sendPrivateMessage(client.getClientId(), message);
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    public void sendChannelMessage(TeamspeakChannel teamspeakChannel, String s) throws IOException {
+        try {
+            if (teamspeakChannel.getChannelId() == getCurrentChannel().getChannelId()) {
+                this.client.sendChannelMessage(teamspeakChannel.getChannelId(), s);
+            } else
+                throw new IllegalStateException("not connected to channel: " + teamspeakChannel.getChannelId());
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
     }
 
     public void follow(TeamspeakClient teamspeakClient) throws IOException {

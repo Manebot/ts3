@@ -67,6 +67,14 @@ public class TeamspeakPlatformUser implements PlatformUser {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public Status getStatus() {
+        TeamspeakClient client = getLastActiveClient();
+        if (client == null) return Status.OFFLINE;
+
+        return Status.ONLINE;
+    }
+
     public Chat getPrivateChat() {
         TeamspeakClient client = getLastActiveClient();
         if (client != null) return client.getPrivateChat();

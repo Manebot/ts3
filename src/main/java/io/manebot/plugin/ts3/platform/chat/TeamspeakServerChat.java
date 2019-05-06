@@ -6,9 +6,17 @@ import io.manebot.chat.TextFormat;
 import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.ts3.database.model.TeamspeakServer;
 import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;
+import io.manebot.plugin.ts3.platform.server.TeamspeakServerConnection;
+import io.manebot.tuple.Pair;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TeamspeakServerChat extends TeamspeakChat implements Chat {
     public TeamspeakServerChat(TeamspeakPlatformConnection platformConnection,
@@ -35,16 +43,19 @@ public class TeamspeakServerChat extends TeamspeakChat implements Chat {
 
     @Override
     public Collection<PlatformUser> getPlatformUsers() {
-        return null;
+        TeamspeakServerConnection serverConnection = getServer().getConnection();
+        if (serverConnection == null || !serverConnection.isConnected())
+            return Collections.emptyList();
+
+        return serverConnection.getRegisteredClients().stream().map(Pair::getRight).collect(Collectors.toList());
     }
 
     @Override
-    public boolean isPrivate() {
-        return false;
-    }
+    protected void sendSingleMessage(String rawMessage) throws IOException {
+        TeamspeakServerConnection serverConnection = getServer().getConnection();
+        if (serverConnection == null || !serverConnection.isConnected())
+            throw new IOException("not connected to Teamspeak3 server \"" + getServer().getId() + "\"");
 
-    @Override
-    public Collection<ChatMessage> sendMessage(Consumer<ChatMessage.Builder> function) {
-        return null;
+        serverConnection.sendServerMessage(rawMessage);
     }
 }
