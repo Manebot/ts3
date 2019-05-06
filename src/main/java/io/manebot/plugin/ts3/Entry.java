@@ -52,7 +52,8 @@ public class Entry implements PluginEntry {
             final TeamspeakPlatformConnection platformConnection = new TeamspeakPlatformConnection(
                     platformBuilder.getPlatform(),
                     platformBuilder.getPlugin(),
-                    audio
+                    audio,
+                    builder.requireElevation()
             );
 
             AudioRegistration registration;

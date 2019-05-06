@@ -4,6 +4,7 @@ import com.github.manevolent.ts3j.identity.LocalIdentity;
 import com.github.manevolent.ts3j.identity.Uid;
 
 import io.manebot.chat.Chat;
+import io.manebot.lambda.ThrowingRunnable;
 import io.manebot.platform.AbstractPlatformConnection;
 import io.manebot.platform.Platform;
 import io.manebot.plugin.Plugin;
@@ -21,6 +22,7 @@ import io.manebot.plugin.ts3.platform.server.ServerManager;
 import io.manebot.plugin.ts3.platform.server.TeamspeakServerConnection;
 import io.manebot.plugin.ts3.platform.server.model.TeamspeakClient;
 import io.manebot.plugin.ts3.platform.user.TeamspeakPlatformUser;
+import io.manebot.security.ElevationDispatcher;
 
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
@@ -34,22 +36,20 @@ import java.util.stream.Stream;
 public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
     private final Plugin plugin;
     private final Platform platform;
-
     private final Audio audio;
+    private final ElevationDispatcher elevationDispatcher;
     private final TeamspeakAudioConnection audioConnection;
-
     private final ServerManager serverManager;
 
     private final List<TeamspeakServerConnection> connections = new LinkedList<>();
     private final Object identityLock = new Object();
 
-    public TeamspeakPlatformConnection(Platform platform, Plugin plugin, Audio audio) {
+    public TeamspeakPlatformConnection(Platform platform, Plugin plugin, Audio audio, ElevationDispatcher elevation) {
         this.platform = platform;
         this.plugin = plugin;
-
         this.audio = audio;
+        this.elevationDispatcher = elevation;
         this.audioConnection = new TeamspeakAudioConnection(audio);
-
         this.serverManager = plugin.getInstance(ServerManager.class);
     }
 
@@ -127,7 +127,14 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
                     throw new IllegalArgumentException(e);
                 }
 
-                plugin.getRegistration().setProperty("identity", identityString);
+                String finalIdentityString = identityString;
+                try {
+                    elevationDispatcher.elevate(
+                            () -> plugin.getRegistration().setProperty("identity", finalIdentityString)
+                    );
+                } catch (Exception e) {
+                    throw new RuntimeException("Problem setting plugin identity property", e);
+                }
 
                 plugin.getLogger().info("New bot identity generated: " + generatedIdentity.getUid().toBase64());
             }
@@ -151,7 +158,15 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
 
                 localIdentity.improveSecurity(securityLevel);
                 keyOffset = localIdentity.getKeyOffset();
-                plugin.getRegistration().setProperty("keyOffset", Long.toString(keyOffset));
+
+                long finalKeyOffset = keyOffset;
+                try {
+                    elevationDispatcher.elevate(
+                            () -> plugin.getRegistration().setProperty("keyOffset", Long.toString(finalKeyOffset))
+                    );
+                } catch (Exception e) {
+                    throw new RuntimeException("Problem setting plugin keyOffset property", e);
+                }
             }
 
             localIdentity.setKeyOffset(keyOffset);
