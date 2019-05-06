@@ -26,10 +26,9 @@ import io.manebot.security.ElevationDispatcher;
 
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,6 +42,8 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
 
     private final List<TeamspeakServerConnection> connections = new LinkedList<>();
     private final Object identityLock = new Object();
+
+    private boolean connected = false;
 
     public TeamspeakPlatformConnection(Platform platform, Plugin plugin, Audio audio, ElevationDispatcher elevation) {
         this.platform = platform;
@@ -206,20 +207,44 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
     }
 
     @Override
+    public boolean isConnected() {
+        return connected;
+    }
+
+    @Override
     public void connect() throws PluginException {
         for (TeamspeakServer server : serverManager.getServers()) {
             if (server.isEnabled() && !server.isConnected()) connectToServer(server);
         }
+
+        connected = true;
     }
 
     @Override
     public void disconnect() {
+        List<Future> disconnectionFutures = new ArrayList<>();
+
         for (TeamspeakServer server : serverManager.getServers()) {
             if (server.isConnected())
-                server.getConnection()
-                        .disconnectAsync()
-                        .whenComplete((connection, throwable) -> connections.remove(connection));
+                disconnectionFutures.add(server.getConnection().disconnectAsync().toCompletableFuture());
         }
+
+        Iterator<Future> futureIterator = disconnectionFutures.iterator();
+        while (futureIterator.hasNext()) {
+            try {
+                futureIterator.next().get();
+            } catch (InterruptedException e) {
+                break;
+            } catch (ExecutionException e) {
+                continue; // Ignore
+            } finally {
+                futureIterator.remove();
+            }
+        }
+
+        super.disconnect();
+
+        connected = false;
     }
 
     @Override
