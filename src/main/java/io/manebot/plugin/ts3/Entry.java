@@ -33,7 +33,10 @@ public class Entry implements PluginEntry {
 
         builder.addCommand(
                 Arrays.asList("teamspeak", "ts"),
-                future -> new TeamspeakCommand(future.getPlugin().getInstance(ServerManager.class))
+                future -> new TeamspeakCommand(
+                        future.getPlugin(),
+                        future.getPlugin().getInstance(ServerManager.class)
+                )
         );
 
         builder.addPlatform(platformBuilder -> {
