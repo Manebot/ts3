@@ -27,4 +27,11 @@ public enum TeamspeakConnectionProperty {
     public Consumer<Pair<TeamspeakServer, String>> getSetter() {
         return setter;
     }
+
+    public static TeamspeakConnectionProperty fromName(String propertyKey) {
+        for (TeamspeakConnectionProperty property : values())
+             if (property.getName().equalsIgnoreCase(propertyKey)) return property;
+
+        throw new IllegalArgumentException("Property not recognized.");
+    }
 }

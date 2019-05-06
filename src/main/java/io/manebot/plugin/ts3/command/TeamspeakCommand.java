@@ -182,9 +182,7 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
         TeamspeakServer server = serverManager.getServer(id);
         if (server == null) throw new CommandArgumentException("Server does not exist.");
 
-        TeamspeakConnectionProperty property = TeamspeakConnectionProperty.valueOf(propertyKey);
-        if (property == null) throw new CommandArgumentException("Unknown Teamspeak server property");
-
+        TeamspeakConnectionProperty property = TeamspeakConnectionProperty.fromName(propertyKey);
         property.getSetter().accept(new Pair<>(server, value));
 
         sender.sendMessage("Server \"" + server.getId() + "\" property \"" +
@@ -205,8 +203,6 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
         if (server == null) throw new CommandArgumentException("Server does not exist.");
 
         TeamspeakConnectionProperty property = TeamspeakConnectionProperty.valueOf(propertyKey);
-        if (property == null) throw new CommandArgumentException("Unknown Teamspeak server property");
-
         property.getSetter().accept(new Pair<>(server, null));
 
         sender.sendMessage("Server \"" + server.getId() + "\" property \"" + property.getName() + "\" unset.");
