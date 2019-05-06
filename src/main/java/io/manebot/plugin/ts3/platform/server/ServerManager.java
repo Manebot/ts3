@@ -58,7 +58,7 @@ public class ServerManager implements PluginReference {
     public Collection<TeamspeakServer> getServers() {
         return database.execute(s -> {
             return s.createQuery(
-                    "SELECT x FROM " + TeamspeakServer.class.getName() + " x WHERE x.id=:id",
+                    "SELECT x FROM " + TeamspeakServer.class.getName() + " x",
                     TeamspeakServer.class
             ).getResultList();
         });
