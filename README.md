@@ -66,8 +66,9 @@ This plugin supports the following essential Teamspeak3 features:
 
 * TS3DNS ready, connecting directly to Teamspeak3 as a single, full client.  No ServerQuery clients needed!
 * Teamspeak3 audio system (audio broadcast as stereo Opus Music, capable of receiving Opus Voice/Music for other plugins).
-* Teamspeak3 user system (via user unique identity).
+* Teamspeak3 user system, via user unique identity, associated with the global Manebot user & permission system.
 * Automatic user registration via the default user registration implementation.
-* *Markdown* text in chat (bold, italics, inline or block code, underline, strikethrough, etc.).
+* *Markdown* text in chat (bold, italics, underline, strikethrough).
 * Server, voice channel, and private chat channels.
 * Lobby (bot default/sleep) and Away (inactive) channels, with idle timeout to move inactive clients.
+* Connection events allow other plugins to audit & vett new client connections, including validating IP addresses.  Check out automatic ban plugins that utilize DNS blacklists to stop clients on VPNs from connecting to your servers, ban entire CIDRs, etc.
