@@ -112,23 +112,27 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
      */
     public LocalIdentity getIdentity() throws IllegalArgumentException {
         synchronized (identityLock) {
-            String identity = plugin.getProperty("identity");
+            String identityString = plugin.getProperty("identity");
 
-            if (identity == null) {
-                plugin.getLogger().warning("Identity missing; generating new Teamspeak3 identity...");
+            if (identityString == null) {
+                plugin.getLogger().warning("Bot Teamspeak3 identity missing; generating new bot identity...");
+                LocalIdentity generatedIdentity;
 
                 try {
-                    identity = Base64.getEncoder().encodeToString(
-                            LocalIdentity.generateNew(0).getPrivateKey().toByteArray()
+                    generatedIdentity = LocalIdentity.generateNew(0);
+                    identityString = Base64.getEncoder().encodeToString(
+                            generatedIdentity.getPrivateKey().toByteArray()
                     );
                 } catch (GeneralSecurityException e) {
                     throw new IllegalArgumentException(e);
                 }
 
-                plugin.getRegistration().setProperty("identity", identity);
+                plugin.getRegistration().setProperty("identity", identityString);
+
+                plugin.getLogger().info("New bot identity generated: " + generatedIdentity.getUid().toBase64());
             }
 
-            byte[] identityBytes = Base64.getDecoder().decode(identity);
+            byte[] identityBytes = Base64.getDecoder().decode(identityString);
             LocalIdentity localIdentity = LocalIdentity.load(new BigInteger(identityBytes));
 
             String keyOffsetString = plugin.getProperty("keyOffset");
@@ -141,8 +145,8 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
             int securityLevel = Integer.parseInt(plugin.getProperty("securityLevel", "10"));
             if (securityLevel > localIdentity.getSecurityLevel()) {
                 plugin.getLogger().warning(
-                        "Identity security level < " + securityLevel + "; " +
-                                "improving security level for identity..."
+                        "Bot identity security level < " + securityLevel + "; " +
+                                "improving security level for bot identity..."
                 );
 
                 localIdentity.improveSecurity(securityLevel);
