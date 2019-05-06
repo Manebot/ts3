@@ -28,33 +28,12 @@ public class ServerManager implements PluginReference {
         });
     }
 
-    public TeamspeakServer createServer(String id) {
+    public TeamspeakServer addServer(String id, String endpoint) {
         try {
             return database.executeTransaction(s -> {
-                TeamspeakServer discordGuild = new TeamspeakServer(database, id);
+                TeamspeakServer discordGuild = new TeamspeakServer(database, id, endpoint);
                 s.persist(discordGuild);
                 return discordGuild;
-            });
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public TeamspeakServer getOrCreateServer(String id) {
-        try {
-            return database.executeTransaction(s -> {
-                return s.createQuery(
-                        "SELECT x FROM " + TeamspeakServer.class.getName() + " x WHERE x.id=:id",
-                        TeamspeakServer.class
-                ).setParameter("id", id)
-                        .getResultList()
-                        .stream()
-                        .findFirst()
-                        .orElseGet(() -> {
-                            TeamspeakServer discordGuild = new TeamspeakServer(database, id);
-                            s.persist(discordGuild);
-                            return discordGuild;
-                        });
             });
         } catch (SQLException e) {
             throw new RuntimeException(e);

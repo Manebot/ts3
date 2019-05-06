@@ -5,6 +5,9 @@ import io.manebot.database.model.TimedRow;
 import io.manebot.plugin.ts3.platform.server.TeamspeakServerConnection;
 
 import javax.persistence.*;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @javax.persistence.Entity
 @Table(
@@ -29,7 +32,7 @@ public class TeamspeakServer extends TimedRow {
     @Column()
     private String id;
 
-    @Column()
+    @Column(nullable = false)
     private String endpoint;
 
     @Column(nullable = true)
@@ -45,19 +48,19 @@ public class TeamspeakServer extends TimedRow {
     private String awayChannel;
 
     @Column()
-    private boolean enabled = true;
+    private boolean enabled = false;
 
     @Column()
     private int idleTimeout = 600;
 
-    public TeamspeakServer(Database database) {
+    public TeamspeakServer(Database database, String id, String endpoint) {
         this.database = database;
+        this.id = id;
+        this.endpoint = endpoint;
     }
 
-    public TeamspeakServer(Database database, String id) {
-        this(database);
-
-        this.id = id;
+    public TeamspeakServer(Database database) {
+        this.database = database;
     }
 
     public String getId() {
@@ -70,17 +73,25 @@ public class TeamspeakServer extends TimedRow {
 
     public void setIdleTimeout(int idleTimeout) {
         if (this.idleTimeout != idleTimeout) {
-            this.idleTimeout = database.execute(s -> {
-                TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
-                model.idleTimeout = idleTimeout;
-                model.setUpdated(System.currentTimeMillis());
-                return idleTimeout;
-            });
+            try {
+                this.idleTimeout = database.executeTransaction(s -> {
+                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
+                    model.idleTimeout = idleTimeout;
+                    model.setUpdated(System.currentTimeMillis());
+                    return idleTimeout;
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     public void remove() {
-        database.execute(s -> { s.remove(TeamspeakServer.this); });
+        try {
+            database.executeTransaction(s -> { s.remove(TeamspeakServer.this); });
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getDisplayName() {
@@ -89,12 +100,16 @@ public class TeamspeakServer extends TimedRow {
 
     public void setDisplayName(String displayName) {
         if (this.displayName == null || !this.displayName.equals(displayName)) {
-            this.displayName = database.execute(s -> {
-                TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
-                model.displayName = displayName;
-                model.setUpdated(System.currentTimeMillis());
-                return displayName;
-            });
+            try {
+                this.displayName = database.executeTransaction(s -> {
+                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
+                    model.displayName = displayName;
+                    model.setUpdated(System.currentTimeMillis());
+                    return displayName;
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -104,12 +119,16 @@ public class TeamspeakServer extends TimedRow {
 
     public void setEndpoint(String endpoint) {
         if (this.endpoint == null || !this.endpoint.equals(endpoint)) {
-            this.endpoint = database.execute(s -> {
-                TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
-                model.endpoint = endpoint;
-                model.setUpdated(System.currentTimeMillis());
-                return endpoint;
-            });
+            try {
+                this.endpoint = database.executeTransaction(s -> {
+                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
+                    model.endpoint = endpoint;
+                    model.setUpdated(System.currentTimeMillis());
+                    return endpoint;
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -124,12 +143,16 @@ public class TeamspeakServer extends TimedRow {
 
     public void setEnabled(boolean enabled) {
         if (!this.enabled == enabled) {
-            this.enabled = database.execute(s -> {
-                TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
-                model.enabled = enabled;
-                model.setUpdated(System.currentTimeMillis());
-                return enabled;
-            });
+            try {
+                this.enabled = database.executeTransaction(s -> {
+                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
+                    model.enabled = enabled;
+                    model.setUpdated(System.currentTimeMillis());
+                    return enabled;
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
 
             if (!enabled && isConnected())
                 getConnection().disconnectAsync();
@@ -142,12 +165,16 @@ public class TeamspeakServer extends TimedRow {
 
     public void setPassword(String password) {
         if (this.password == null || !this.password.equals(password)) {
-            this.password = database.execute(s -> {
-                TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
-                model.password = password;
-                model.setUpdated(System.currentTimeMillis());
-                return password;
-            });
+            try {
+                this.password = database.executeTransaction(s -> {
+                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
+                    model.password = password;
+                    model.setUpdated(System.currentTimeMillis());
+                    return password;
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -157,12 +184,16 @@ public class TeamspeakServer extends TimedRow {
 
     public void setLobbyChannel(String lobbyChannel) {
         if (this.lobbyChannel == null || !this.lobbyChannel.equals(lobbyChannel)) {
-            this.lobbyChannel = database.execute(s -> {
-                TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
-                model.lobbyChannel = lobbyChannel;
-                model.setUpdated(System.currentTimeMillis());
-                return lobbyChannel;
-            });
+            try {
+                this.lobbyChannel = database.executeTransaction(s -> {
+                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
+                    model.lobbyChannel = lobbyChannel;
+                    model.setUpdated(System.currentTimeMillis());
+                    return lobbyChannel;
+                });
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -172,12 +203,16 @@ public class TeamspeakServer extends TimedRow {
 
     public void setAwayChannel(String awayChannel) {
         if (this.awayChannel == null || !this.awayChannel.equals(awayChannel)) {
-            this.awayChannel = database.execute(s -> {
-                TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
-                model.awayChannel = awayChannel;
-                model.setUpdated(System.currentTimeMillis());
-                return awayChannel;
-            });
+            try {
+                this.awayChannel = database.executeTransaction(s -> {
+                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
+                    model.awayChannel = awayChannel;
+                    model.setUpdated(System.currentTimeMillis());
+                    return awayChannel;
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -193,7 +228,12 @@ public class TeamspeakServer extends TimedRow {
         TeamspeakServerConnection serverConnection = connection;
         if (serverConnection == null) throw new IllegalStateException("");
 
-        serverConnection.connectAsync().exceptionally((e) -> connect());
+        serverConnection.connectAsync().exceptionally((e) -> {
+            Logger.getGlobal().log(Level.WARNING, "Problem connecting to Teamspeak3 server \"" + id + "\"", e);
+
+            if (isEnabled()) return connect();
+            else return serverConnection;
+        });
 
         return serverConnection;
     }

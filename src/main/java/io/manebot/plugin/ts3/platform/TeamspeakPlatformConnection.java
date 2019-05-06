@@ -208,7 +208,7 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
     @Override
     public void connect() throws PluginException {
         for (TeamspeakServer server : serverManager.getServers()) {
-            if (!server.isConnected()) connectToServer(server);
+            if (server.isEnabled() && !server.isConnected()) connectToServer(server);
         }
     }
 
