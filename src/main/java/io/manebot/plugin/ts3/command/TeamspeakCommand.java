@@ -23,7 +23,7 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
 
     public TeamspeakCommand(Plugin plugin, ServerManager serverManager) {
         this.serverManager = serverManager;
-        this.platformConnection = (TeamspeakPlatformConnection) plugin.getPlatformById("teamspeak").getConnection();
+        this.platformConnection = (TeamspeakPlatformConnection) plugin.getPlatformById("ts3").getConnection();
     }
 
     @Command(description = "Lists Teamspeak servers", permission = "teamspeak.server.list")
