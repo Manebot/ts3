@@ -771,6 +771,58 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         }
     }
 
+    public void onAwayChannelChanged(String name) {
+        if (name != null) {
+            if (isConnected()) {
+                TeamspeakChannel awayChannel = getAwayChannel();
+
+                TeamspeakChannel newChannel = findChannelByName(name);
+                if (newChannel == null) throw new IllegalArgumentException("Couldn't find new channel.");
+
+                for (TeamspeakClient client : getClients()) {
+                    TeamspeakChannel channel = client.getChannel();
+
+                    if (awayChannel != null && channel != null &&
+                            channel.getChannelId() == awayChannel.getChannelId()) {
+                        moveClient(client, newChannel);
+                    }
+                }
+            }
+        }
+    }
+
+    public void onLobbyChannelChanged(String name) {
+        if (name != null) {
+            if (isConnected()) {
+                TeamspeakChannel lobbyChannel = getLobbyChannel();
+
+                TeamspeakChannel newChannel = findChannelByName(name);
+                if (newChannel == null) throw new IllegalArgumentException("Couldn't find new channel.");
+
+                for (TeamspeakClient client : getClients()) {
+                    TeamspeakChannel channel = client.getChannel();
+
+                    if (lobbyChannel != null && channel != null &&
+                            channel.getChannelId() == lobbyChannel.getChannelId()) {
+                        moveClient(client, newChannel);
+                    }
+                }
+            }
+        }
+    }
+
+    public void onPasswordChanged(String password) {
+        // Do nothing
+    }
+
+    public void onIdleTimeoutChanged(int idleTimeout) {
+        reschedule(idleTimeout * 1000);
+    }
+
+    public void onNicknameChanged(String nickname) {
+        client.setNickname(nickname);
+    }
+
     private class Sleeper implements Runnable {
         private final long sleepTime;
         private final Object lock = new Object();

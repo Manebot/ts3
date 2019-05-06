@@ -83,6 +83,11 @@ public class TeamspeakServer extends TimedRow {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
+
+            TeamspeakServerConnection serverConnection = getConnection();
+            if (serverConnection != null && serverConnection.isConnected()) {
+                serverConnection.onIdleTimeoutChanged(idleTimeout);
+            }
         }
     }
 
@@ -107,6 +112,11 @@ public class TeamspeakServer extends TimedRow {
                     model.setUpdated(System.currentTimeMillis());
                     return displayName;
                 });
+
+                TeamspeakServerConnection serverConnection = getConnection();
+                if (serverConnection != null && serverConnection.isConnected()) {
+                    serverConnection.onNicknameChanged(displayName);
+                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -115,21 +125,6 @@ public class TeamspeakServer extends TimedRow {
 
     public String getEndpoint() {
         return endpoint;
-    }
-
-    public void setEndpoint(String endpoint) {
-        if (this.endpoint == null || !this.endpoint.equals(endpoint)) {
-            try {
-                this.endpoint = database.executeTransaction(s -> {
-                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
-                    model.endpoint = endpoint;
-                    model.setUpdated(System.currentTimeMillis());
-                    return endpoint;
-                });
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     public boolean isConnected() {
@@ -175,6 +170,11 @@ public class TeamspeakServer extends TimedRow {
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
+
+            TeamspeakServerConnection serverConnection = getConnection();
+            if (serverConnection != null && serverConnection.isConnected()) {
+                serverConnection.onPasswordChanged(password);
+            }
         }
     }
 
@@ -191,6 +191,11 @@ public class TeamspeakServer extends TimedRow {
                     model.setUpdated(System.currentTimeMillis());
                     return lobbyChannel;
                 });
+
+                TeamspeakServerConnection serverConnection = getConnection();
+                if (serverConnection != null && serverConnection.isConnected()) {
+                    serverConnection.onLobbyChannelChanged(lobbyChannel);
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -212,6 +217,11 @@ public class TeamspeakServer extends TimedRow {
                 });
             } catch (SQLException e) {
                 throw new RuntimeException(e);
+            }
+
+            TeamspeakServerConnection serverConnection = getConnection();
+            if (serverConnection != null && serverConnection.isConnected()) {
+                serverConnection.onAwayChannelChanged(awayChannel);
             }
         }
     }

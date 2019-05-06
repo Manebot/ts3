@@ -5,14 +5,12 @@ import io.manebot.command.CommandSender;
 import io.manebot.command.exception.CommandArgumentException;
 import io.manebot.command.exception.CommandExecutionException;
 import io.manebot.command.executor.chained.AnnotatedCommandExecutor;
-import io.manebot.command.executor.chained.argument.CommandArgumentFollowing;
-import io.manebot.command.executor.chained.argument.CommandArgumentLabel;
-import io.manebot.command.executor.chained.argument.CommandArgumentPage;
-import io.manebot.command.executor.chained.argument.CommandArgumentString;
+import io.manebot.command.executor.chained.argument.*;
 import io.manebot.plugin.Plugin;
 import io.manebot.plugin.ts3.database.model.TeamspeakServer;
 import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;
 import io.manebot.plugin.ts3.platform.server.ServerManager;
+import io.manebot.tuple.Pair;
 
 import java.util.Comparator;
 import java.util.EnumSet;
@@ -168,5 +166,49 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
 
         server.setEnabled(false);
         sender.sendMessage("Server \"" + server.getId() + "\" disabled.");
+    }
+
+    @Command(description = "Sets a server property", permission = "teamspeak.server.property.set")
+    public void set(CommandSender sender,
+                    @CommandArgumentLabel.Argument(label = "server") String serverLabel,
+                    @CommandArgumentLabel.Argument(label = "set") String enable,
+                    @CommandArgumentString.Argument(label = "id") String id,
+                    @CommandArgumentSwitch.Argument(labels =
+                            {"away-channel","lobby-channel","password","nickname","idle-timeout"}) String propertyKey,
+                    @CommandArgumentFollowing.Argument() String value)
+            throws CommandExecutionException {
+        id = id.toLowerCase().trim();
+
+        TeamspeakServer server = serverManager.getServer(id);
+        if (server == null) throw new CommandArgumentException("Server does not exist.");
+
+        TeamspeakConnectionProperty property = TeamspeakConnectionProperty.valueOf(propertyKey);
+        if (property == null) throw new CommandArgumentException("Unknown Teamspeak server property");
+
+        property.getSetter().accept(new Pair<>(server, value));
+
+        sender.sendMessage("Server \"" + server.getId() + "\" property \"" +
+                property.getName() + "\" set to \"" + value + "\".");
+    }
+
+    @Command(description = "Unsets a server property", permission = "teamspeak.server.property.unset")
+    public void unset(CommandSender sender,
+                      @CommandArgumentLabel.Argument(label = "server") String serverLabel,
+                      @CommandArgumentLabel.Argument(label = "unset") String disable,
+                      @CommandArgumentString.Argument(label = "id") String id,
+                      @CommandArgumentSwitch.Argument(labels =
+                              {"away-channel","lobby-channel","password","nickname","idle-timeout"}) String propertyKey)
+            throws CommandExecutionException {
+        id = id.toLowerCase().trim();
+
+        TeamspeakServer server = serverManager.getServer(id);
+        if (server == null) throw new CommandArgumentException("Server does not exist.");
+
+        TeamspeakConnectionProperty property = TeamspeakConnectionProperty.valueOf(propertyKey);
+        if (property == null) throw new CommandArgumentException("Unknown Teamspeak server property");
+
+        property.getSetter().accept(new Pair<>(server, null));
+
+        sender.sendMessage("Server \"" + server.getId() + "\" property \"" + property.getName() + "\" unset.");
     }
 }

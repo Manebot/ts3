@@ -147,9 +147,11 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
             long keyOffset = 0L;
             if (keyOffsetString != null) {
                  keyOffset = Long.parseLong(keyOffsetString);
+
+                localIdentity.setKeyOffset(keyOffset);
+                localIdentity.setLastCheckedKeyOffset(keyOffset);
             }
 
-            // prevent multiple threads from fighting and causing unnecessary CPU
             int securityLevel = Integer.parseInt(plugin.getProperty("securityLevel", "10"));
             if (securityLevel > localIdentity.getSecurityLevel()) {
                 plugin.getLogger().warning(
@@ -168,10 +170,10 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
                 } catch (Exception e) {
                     throw new RuntimeException("Problem setting plugin keyOffset property", e);
                 }
-            }
 
-            localIdentity.setKeyOffset(keyOffset);
-            localIdentity.setLastCheckedKeyOffset(keyOffset);
+                localIdentity.setKeyOffset(keyOffset);
+                localIdentity.setLastCheckedKeyOffset(keyOffset);
+            }
 
             return localIdentity;
         }
