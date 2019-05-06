@@ -1,39 +1,103 @@
 package io.manebot.plugin.ts3.platform.audio;
 
-import io.manebot.chat.Chat;
-import io.manebot.plugin.audio.Audio;
-import io.manebot.plugin.audio.api.AbstractAudioConnection;
+import com.github.manevolent.ts3j.identity.Uid;
+import io.manebot.conversation.Conversation;
+import io.manebot.platform.Platform;
+import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.audio.channel.AudioChannel;
-import io.manebot.plugin.ts3.database.model.TeamspeakServer;
-import io.manebot.plugin.ts3.platform.chat.TeamspeakChannel;
+import io.manebot.plugin.audio.channel.AudioChannelRegistrant;
+import io.manebot.plugin.audio.mixer.Mixer;
+
 import io.manebot.plugin.ts3.platform.server.TeamspeakServerConnection;
+import io.manebot.plugin.ts3.platform.server.model.TeamspeakChannel;
+import io.manebot.plugin.ts3.platform.server.model.TeamspeakClient;
 
-public class TeamspeakAudioChannel extends AbstractAudioConnection {
-    private final TeamspeakServerConnection connection;
+import io.manebot.tuple.Pair;
+import io.manebot.user.UserAssociation;
 
-    private TeamspeakAudioChannel(Audio audio, TeamspeakServerConnection connection) {
-        super(audio);
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-        this.connection = connection;
+public class TeamspeakAudioChannel extends AudioChannel {
+    private final TeamspeakServerConnection serverConnection;
+
+    public TeamspeakAudioChannel(Mixer mixer,
+                                 AudioChannelRegistrant owner,
+                                 TeamspeakServerConnection serverConnection) {
+        super(mixer, owner);
+
+        this.serverConnection = serverConnection;
     }
 
     @Override
-    public AudioChannel getChannel(Chat chat) {
-        if (chat instanceof TeamspeakChannel) {
-            TeamspeakServer server = ((TeamspeakChannel) chat).getServer();
-            if (!server.isEnabled())
-                return null;
-
-            TeamspeakServerConnection connection = server.getConnection();
-            if (connection == null || !connection.isConnected())
-                return null;
-
-            return connection.getAudioChannel();
-        } else return null;
+    public String getId() {
+        return "teamspeak:server:" + serverConnection.getId();
     }
 
     @Override
-    public boolean isConnected() {
-        return super.isConnected() && connection.isConnected();
+    public Platform getPlatform() {
+        return serverConnection.getPlatformConnection().getPlatform();
+    }
+
+    @Override
+    public List<PlatformUser> getMembers() {
+        TeamspeakChannel channel = serverConnection.getCurrentChannel();
+        if (channel == null) return Collections.emptyList();
+
+        return serverConnection.getRegisteredClients(channel.getClients()).stream()
+                .map(Pair::getRight)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PlatformUser> getListeners() {
+        TeamspeakChannel channel = serverConnection.getCurrentChannel();
+        if (channel == null) return Collections.emptyList();
+
+        return serverConnection.getRegisteredClients(
+                channel.getClients().stream().filter(TeamspeakClient::isListening)
+        ).stream()
+                .filter(pair -> pair.getLeft().isListening())
+                .map(Pair::getRight)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Conversation getConversation() {
+        TeamspeakChannel channel = serverConnection.getCurrentChannel();
+        if (channel == null) return null;
+
+        return getPlatform().getPlugin().getBot().getConversationProvider()
+                .getConversationByChat(serverConnection.getChat(channel));
+    }
+
+    @Override
+    public Ownership obtainChannel(UserAssociation association) {
+        Ownership ownership = this.obtain(association);
+
+        try {
+            if (getBlockingPlayers() <= 0 || isIdle()) {
+                TeamspeakClient teamspeakClient = serverConnection.findClient(new Uid(association.getPlatformId()));
+                if (teamspeakClient == null)
+                    throw new IllegalArgumentException("You could not be found in Teamspeak.");
+
+                serverConnection.follow(teamspeakClient);
+            }
+
+            return ownership;
+        } catch (Throwable ex) {
+            if (ownership != null) {
+                try {
+                    ownership.close();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            throw new RuntimeException(ex);
+        }
     }
 }

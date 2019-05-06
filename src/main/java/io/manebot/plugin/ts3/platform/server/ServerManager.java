@@ -49,16 +49,11 @@ public class ServerManager implements PluginReference {
         }
     }
 
-    public void removeServer(String stringID) {
-        TeamspeakServer guild = getServer(stringID);
-        if (guild != null) guild.remove();
+    public TeamspeakServer removeServer(String id) {
+        TeamspeakServer server = getServer(id);
+        if (server != null) server.remove();
+        return server;
     }
-
-    @Override
-    public void load(Plugin.Future future) {}
-
-    @Override
-    public void unload(Plugin.Future future) {}
 
     public Collection<TeamspeakServer> getServers() {
         return database.execute(s -> {
@@ -68,4 +63,10 @@ public class ServerManager implements PluginReference {
             ).getResultList();
         });
     }
+
+    @Override
+    public void load(Plugin.Future future) {}
+
+    @Override
+    public void unload(Plugin.Future future) {}
 }

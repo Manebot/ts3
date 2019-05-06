@@ -42,11 +42,7 @@ public class Entry implements PluginEntry {
                 audioPlugin = null;
             }
 
-            Audio audio;
-            if (audioPlugin != null) {
-                audio = audioPlugin.getInstance(Audio.class);
-            } else
-                audio = null;
+            Audio audio = audioPlugin != null ? audioPlugin.getInstance(Audio.class) : null;
 
             final TeamspeakPlatformConnection platformConnection = new TeamspeakPlatformConnection(
                     platformBuilder.getPlatform(),
@@ -54,14 +50,13 @@ public class Entry implements PluginEntry {
             );
 
             AudioRegistration registration;
-            if (audio != null) {
+            if (audio != null)
                 registration = audio.createRegistration(
                         platformBuilder.getPlatform(),
                         consumer -> consumer.setConnection(platformConnection.getAudioConnection())
                 );
-            } else {
+            else
                 registration = null;
-            }
 
             platformBuilder.setConnection(platformConnection);
         });

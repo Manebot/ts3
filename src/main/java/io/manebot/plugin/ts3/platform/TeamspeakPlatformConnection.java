@@ -1,10 +1,11 @@
 package io.manebot.plugin.ts3.platform;
 
+import com.github.manevolent.ts3j.identity.LocalIdentity;
+import com.github.manevolent.ts3j.identity.Uid;
+
 import io.manebot.chat.Chat;
 import io.manebot.platform.AbstractPlatformConnection;
 import io.manebot.platform.Platform;
-import io.manebot.platform.PlatformConnection;
-import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.Plugin;
 import io.manebot.plugin.PluginException;
 import io.manebot.plugin.audio.Audio;
@@ -12,43 +13,132 @@ import io.manebot.plugin.audio.api.AbstractAudioConnection;
 import io.manebot.plugin.audio.api.AudioConnection;
 import io.manebot.plugin.audio.channel.AudioChannel;
 import io.manebot.plugin.ts3.database.model.TeamspeakServer;
+import io.manebot.plugin.ts3.platform.chat.TeamspeakChannelChat;
+import io.manebot.plugin.ts3.platform.chat.TeamspeakChat;
+import io.manebot.plugin.ts3.platform.chat.TeamspeakPrivateChat;
+import io.manebot.plugin.ts3.platform.chat.TeamspeakServerChat;
 import io.manebot.plugin.ts3.platform.server.ServerManager;
 import io.manebot.plugin.ts3.platform.server.TeamspeakServerConnection;
+import io.manebot.plugin.ts3.platform.server.model.TeamspeakClient;
+import io.manebot.plugin.ts3.platform.user.TeamspeakPlatformUser;
 
+import java.math.BigInteger;
+import java.util.Base64;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
     private final Plugin plugin;
     private final Platform platform;
-    private final Audio audio;
 
-    private final AudioConnection audioConnection;
+    private final Audio audio;
+    private final TeamspeakAudioConnection audioConnection;
+
     private final ServerManager serverManager;
 
-    private final Map<String, TeamspeakServerConnection> serverConnections = new LinkedHashMap<>();
+    private final List<TeamspeakServerConnection> connections = new LinkedList<>();
+    private final Object securityLevelLock = new Object();
 
-    public TeamspeakPlatformConnection(Platform platform,
-                                       Audio audio) {
-        this.audioConnection = new TeamspeakAudioConnection(audio);
-
-
+    public TeamspeakPlatformConnection(Platform platform, Audio audio) {
         this.platform = platform;
         this.plugin = platform.getPlugin();
+
         this.audio = audio;
+        this.audioConnection = new TeamspeakAudioConnection(audio);
 
         this.serverManager = plugin.getInstance(ServerManager.class);
     }
 
-    @Override
-    protected PlatformUser loadUserById(String id) {
-        return null;
+    protected TeamspeakPlatformUser loadUserById(Uid uid) {
+        return new TeamspeakPlatformUser(this, uid);
     }
 
     @Override
-    protected Chat loadChatById(String id) {
-        return null;
+    protected TeamspeakPlatformUser loadUserById(String id) {
+        return loadUserById(new Uid(id));
+    }
+
+    public TeamspeakPlatformUser getPlatformUser(Uid uid) {
+        return (TeamspeakPlatformUser) super.getCachedUserById(uid.toBase64(), (key) -> loadUserById(uid));
+    }
+
+    @Override
+    public TeamspeakPlatformUser getPlatformUser(String uid) {
+        return (TeamspeakPlatformUser) super.getPlatformUser(uid);
+    }
+
+    @Override
+    protected TeamspeakChat loadChatById(String id) {
+        String[] parts = id.split("\\:");
+        String serverId = parts[0].toLowerCase();
+
+        TeamspeakServer server = serverManager.getServer(serverId);
+        if (server == null) throw new IllegalArgumentException("unknown Teamspeak3 server: " + serverId);
+
+        TeamspeakChat chat;
+        switch (parts[1].toLowerCase()) {
+            case "channel":
+                if (parts.length != 3) throw new IllegalArgumentException("invalid chat ID: " + id);
+                chat = new TeamspeakChannelChat(this, server, Integer.parseInt(parts[2]));
+                break;
+            case "global":
+                if (parts.length != 2) throw new IllegalArgumentException("invalid chat ID: " + id);
+                chat = new TeamspeakServerChat(this, server);
+                break;
+            case "private":
+                if (parts.length != 3) throw new IllegalArgumentException("invalid chat ID: " + id);
+                chat = new TeamspeakPrivateChat(this, server, new Uid(parts[2]));
+                break;
+            default:
+                throw new UnsupportedOperationException("unsupported Teamspeak3 chat type: " + parts[1]);
+        }
+
+        return chat;
+    }
+
+    @Override
+    public TeamspeakChat getChat(String id) {
+        return (TeamspeakChat) super.getChat(id);
+    }
+
+    /**
+     * Gets the current Teamspeak3 identity set for this platform.
+     * @return LocalIdentity instance.
+     * @throws IllegalArgumentException
+     */
+    public LocalIdentity getIdentity() throws IllegalArgumentException {
+        String identity = plugin.getProperty("identity");
+        if (identity == null) throw new IllegalArgumentException("Missing bot client Teamspeak3 identity");
+        byte[] identityBytes = Base64.getDecoder().decode(identity);
+        LocalIdentity localIdentity = LocalIdentity.load(new BigInteger(identityBytes));
+
+        String keyOffsetString = plugin.getProperty("keyOffset");
+        long keyOffset = 0L;
+        if (keyOffsetString != null) {
+             keyOffset = Long.parseLong(keyOffsetString);
+        }
+
+        synchronized (securityLevelLock) { // prevent multiple threads from fighting and causing unnecessary CPU
+            int securityLevel = Integer.parseInt(plugin.getProperty("securityLevel", "10"));
+            if (securityLevel > localIdentity.getSecurityLevel()) {
+                plugin.getLogger().warning(
+                        "Identity security level < " + securityLevel + "; " +
+                                "improving security level for identity..."
+                );
+
+                localIdentity.improveSecurity(securityLevel);
+                keyOffset = localIdentity.getKeyOffset();
+                plugin.getRegistration().setProperty("keyOffset", Long.toString(keyOffset));
+            }
+        }
+
+        localIdentity.setKeyOffset(keyOffset);
+        localIdentity.setLastCheckedKeyOffset(keyOffset);
+
+        return localIdentity;
     }
 
     public AudioConnection getAudioConnection() {
@@ -69,31 +159,88 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
 
     @Override
     public void connect() throws PluginException {
-        Collection<TeamspeakServer> servers = serverManager.getServers();
-        for (TeamspeakServer server : servers)
-            if (server.isEnabled() && !server.isConnected()) server.connect();
-    }
+        for (TeamspeakServer server : serverManager.getServers()) {
+            if (!server.isConnected()) {
+                TeamspeakServerConnection serverConnection = new TeamspeakServerConnection(
+                        this,
+                        server,
+                        audio,
+                        audioConnection
+                );
 
-    @Override
-    public void disconnect() {
-        Collection<TeamspeakServer> servers = serverManager.getServers();
-        for (TeamspeakServer server : servers) {
-            if (server.isConnected()) server.disconnect();
+                connections.add(serverConnection);
+
+                server.setConnection(serverConnection);
+
+                server.connect();
+            }
         }
     }
 
     @Override
-    public PlatformUser getSelf() {
-        return null;
+    public void disconnect() {
+        for (TeamspeakServer server : serverManager.getServers()) {
+            if (server.isConnected())
+                server.getConnection()
+                        .disconnectAsync()
+                        .whenComplete((connection, throwable) -> connections.remove(connection));
+        }
+    }
+
+    @Override
+    public TeamspeakPlatformUser getSelf() throws IllegalArgumentException {
+        Uid clientUid = getIdentity().getUid();
+        return clientUid != null ? getPlatformUser(clientUid) : null;
     }
 
     @Override
     public Collection<String> getPlatformUserIds() {
-        return null;
+        return connections.stream()
+                .filter(TeamspeakServerConnection::isConnected)
+                .flatMap(connection -> connection.getClients().stream())
+                .map(client -> client.getUid().toBase64())
+                .collect(Collectors.toList());
     }
 
     @Override
     public Collection<String> getChatIds() {
-        return null;
+        return connections.stream()
+                .filter(TeamspeakServerConnection::isConnected)
+                .flatMap(connection -> connection.getChannels().stream())
+                .map(channel -> TeamspeakChannelChat.getChannelChatId(channel.getConnection().getServer(), channel))
+                .collect(Collectors.toList());
+    }
+
+    public Stream<TeamspeakClient> findClients(Uid uid) {
+        return connections.stream()
+                .filter(TeamspeakServerConnection::isConnected)
+                .flatMap(connection -> connection.getClients().stream())
+                .filter(client -> client.getUid().equals(uid));
+    }
+
+    private class TeamspeakAudioConnection extends AbstractAudioConnection {
+        public TeamspeakAudioConnection(Audio audio) {
+            super(audio);
+        }
+
+        @Override
+        public AudioChannel getChannel(Chat chat) {
+            if (chat instanceof TeamspeakChannelChat) {
+                TeamspeakServer server = ((TeamspeakChannelChat) chat).getServer();
+                if (!server.isEnabled())
+                    return null;
+
+                TeamspeakServerConnection connection = server.getConnection();
+                if (connection == null || !connection.isConnected())
+                    return null;
+
+                return connection.getAudioChannel();
+            } else return null;
+        }
+
+        @Override
+        public boolean isConnected() {
+            return super.isConnected();
+        }
     }
 }
