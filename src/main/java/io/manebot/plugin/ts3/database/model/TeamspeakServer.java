@@ -231,6 +231,12 @@ public class TeamspeakServer extends TimedRow {
         serverConnection.connectAsync().exceptionally((e) -> {
             Logger.getGlobal().log(Level.WARNING, "Problem connecting to Teamspeak3 server \"" + id + "\"", e);
 
+            try {
+                Thread.sleep(10_000L);
+            } catch (InterruptedException ex) {
+                return serverConnection;
+            }
+
             if (isEnabled()) return connect();
             else return serverConnection;
         });

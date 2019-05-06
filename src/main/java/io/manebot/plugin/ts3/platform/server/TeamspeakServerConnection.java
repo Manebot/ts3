@@ -282,10 +282,10 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
             throw new RuntimeException("problem reading Opus parameters", e);
         }
 
-        this.mixer = audio.createMixer(server.getId(), consumer -> {
+        this.mixer = audioConnection.registerMixer(audio.createMixer(server.getId(), consumer -> {
             consumer.addDefaultFilters();
             consumer.setFormat(48000f, 2);
-        });
+        }));
 
         mixer.addSink(sink = new TeamspeakMixerSink(
                 TeamspeakMixerSink.AUDIO_FORMAT,
