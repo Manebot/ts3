@@ -217,6 +217,8 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
             if (server.isEnabled() && !server.isConnected()) connectToServer(server);
         }
 
+        audioConnection.connect();
+
         connected = true;
     }
 
@@ -243,6 +245,8 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
         }
 
         super.disconnect();
+
+        audioConnection.disconnect();
 
         connected = false;
     }
