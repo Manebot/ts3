@@ -28,6 +28,18 @@ public class ServerManager implements PluginReference {
         });
     }
 
+    public TeamspeakServer createServer(String id) {
+        try {
+            return database.executeTransaction(s -> {
+                TeamspeakServer discordGuild = new TeamspeakServer(database, id);
+                s.persist(discordGuild);
+                return discordGuild;
+            });
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public TeamspeakServer getOrCreateServer(String id) {
         try {
             return database.executeTransaction(s -> {

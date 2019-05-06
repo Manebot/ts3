@@ -130,6 +130,9 @@ public class TeamspeakServer extends TimedRow {
                 model.setUpdated(System.currentTimeMillis());
                 return enabled;
             });
+
+            if (!enabled && isConnected())
+                getConnection().disconnectAsync();
         }
     }
 

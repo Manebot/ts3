@@ -192,23 +192,23 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
         return serverManager;
     }
 
+    public TeamspeakServerConnection connectToServer(TeamspeakServer server) {
+        TeamspeakServerConnection serverConnection = new TeamspeakServerConnection(
+                this,
+                server,
+                audio,
+                audioConnection
+        );
+        connections.add(serverConnection);
+        server.setConnection(serverConnection);
+        server.connect();
+        return serverConnection;
+    }
+
     @Override
     public void connect() throws PluginException {
         for (TeamspeakServer server : serverManager.getServers()) {
-            if (!server.isConnected()) {
-                TeamspeakServerConnection serverConnection = new TeamspeakServerConnection(
-                        this,
-                        server,
-                        audio,
-                        audioConnection
-                );
-
-                connections.add(serverConnection);
-
-                server.setConnection(serverConnection);
-
-                server.connect();
-            }
+            if (!server.isConnected()) connectToServer(server);
         }
     }
 
