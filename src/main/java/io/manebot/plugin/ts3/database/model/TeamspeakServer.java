@@ -234,9 +234,11 @@ public class TeamspeakServer extends TimedRow {
         this.connection = connection;
     }
 
-    public TeamspeakServerConnection connect() {
+    public TeamspeakServerConnection connectAsync() {
         TeamspeakServerConnection serverConnection = connection;
-        if (serverConnection == null) throw new IllegalStateException("");
+        if (serverConnection == null) throw new NullPointerException();
+
+        if (!isEnabled()) throw new IllegalStateException();
 
         serverConnection.connectAsync().exceptionally((e) -> {
             Logger.getGlobal().log(Level.WARNING, "Problem connecting to Teamspeak3 server \"" + id + "\"", e);
@@ -247,7 +249,7 @@ public class TeamspeakServer extends TimedRow {
                 return serverConnection;
             }
 
-            if (isEnabled()) return connect();
+            if (isEnabled()) return connectAsync();
             else return serverConnection;
         });
 

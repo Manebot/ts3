@@ -69,6 +69,8 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
     private final Map<Integer, TeamspeakChannel> channels = new LinkedHashMap<>();
     private final Map<Integer, TeamspeakClient> clients = new LinkedHashMap<>();
 
+    private boolean connecting, disconnecting;
+
     public TeamspeakServerConnection(TeamspeakPlatformConnection platformConnection,
                                      TeamspeakServer server,
                                      Audio audio,
@@ -139,11 +141,19 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
     }
 
     public TeamspeakServerConnection connect() throws Exception {
-        Throwable exception = null;
+        Throwable exception;
 
-        if (!server.isEnabled()) throw new IllegalStateException("server " + getFriendlyName() + " is not enabled");
+        if (!server.isEnabled())
+            throw new IllegalStateException("server " + getFriendlyName() + " is not enabled");
+
+        if (isConnected())
+            return this;
+
+        if (connecting) throw new IllegalStateException("connecting");
 
         try {
+            connecting = true;
+
             // Ensure identity is set at startup
             client.setIdentity(platformConnection.getIdentity());
 
@@ -176,7 +186,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                 try {
                     client.disconnect();
                 } catch (Exception e1) {
-                    e.addSuppressed(e);
+                    e.addSuppressed(e1);
                 }
             }
 
@@ -184,6 +194,8 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                     "Problem connecting to Teamspeak server (" + getFriendlyName() + ")",
                     exception
             );
+        } finally {
+            connecting = false;
         }
 
         return this;
@@ -303,6 +315,11 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         if (sleeper != null) sleeper.cancel();
 
         unregisterAudio();
+
+        if (disconnecting)
+            disconnecting = false;
+        else if (!connecting)
+            server.connectAsync();
     }
 
     private void unregisterAudio() {
@@ -323,6 +340,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
         new Thread(() -> {
             try {
+                disconnecting = true;
                 disconnect();
                 future.complete(this);
             } catch (Throwable e) {
@@ -335,6 +353,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
     public TeamspeakServerConnection disconnect()
             throws InterruptedException, ExecutionException, TimeoutException, IOException {
+        disconnecting = true;
         if (client.isConnected()) client.disconnect();
 
         return this;

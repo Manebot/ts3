@@ -4,7 +4,6 @@ import com.github.manevolent.ts3j.identity.LocalIdentity;
 import com.github.manevolent.ts3j.identity.Uid;
 
 import io.manebot.chat.Chat;
-import io.manebot.lambda.ThrowingRunnable;
 import io.manebot.platform.AbstractPlatformConnection;
 import io.manebot.platform.Platform;
 import io.manebot.plugin.Plugin;
@@ -204,7 +203,7 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
         );
         connections.add(serverConnection);
         server.setConnection(serverConnection);
-        server.connect();
+        server.connectAsync();
         return serverConnection;
     }
 

@@ -44,7 +44,7 @@
 
     <groupId>io.manebot.plugin</groupId>
     <artifactId>ts3</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0.3</version>
 
     <build>
         <plugins>
@@ -71,6 +71,13 @@
             <groupId>io.manebot.plugin</groupId>
             <artifactId>audio</artifactId>
             <version>0.1.9.11</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.manebot.plugin</groupId>
+            <artifactId>media</artifactId>
+            <version>0.2.7</version>
             <scope>provided</scope>
         </dependency>
 
