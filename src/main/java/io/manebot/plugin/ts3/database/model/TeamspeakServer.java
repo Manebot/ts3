@@ -1,13 +1,21 @@
 package io.manebot.plugin.ts3.database.model;
 
+import io.manebot.chat.Chat;
+import io.manebot.chat.Community;
 import io.manebot.database.Database;
 import io.manebot.database.model.TimedRow;
+import io.manebot.platform.Platform;
+import io.manebot.platform.PlatformConnection;
+import io.manebot.platform.PlatformUser;
+import io.manebot.plugin.ts3.platform.chat.TeamspeakChat;
 import io.manebot.plugin.ts3.platform.server.TeamspeakServerConnection;
 
 import javax.persistence.*;
 import java.sql.SQLException;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @javax.persistence.Entity
 @Table(
@@ -17,7 +25,7 @@ import java.util.logging.Logger;
         },
         uniqueConstraints = {@UniqueConstraint(columnNames ={"endpoint"})}
 )
-public class TeamspeakServer extends TimedRow {
+public class TeamspeakServer extends TimedRow implements Community {
     @Transient
     private final io.manebot.database.Database database;
 
@@ -63,8 +71,70 @@ public class TeamspeakServer extends TimedRow {
         this.database = database;
     }
 
+    @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public void setName(String name) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Platform getPlatform() {
+        return database.getDatabaseManager().getBot().getPlatformById("ts3");
+    }
+
+    @Override
+    public Collection<String> getChatIds() {
+        TeamspeakServerConnection connection = this.connection;
+        if (connection == null || !connection.isConnected()) return Collections.emptyList();
+
+        List<String> chats = new ArrayList<>();
+
+        chats.addAll(connection.getChannels().stream()
+                .map(channel -> TeamspeakChat.getChannelChatId(this, channel))
+                .collect(Collectors.toList()));
+
+        chats.addAll(connection.getClients().stream()
+                .map(client -> TeamspeakChat.getPrivateChatId(this, client))
+                .collect(Collectors.toList()));
+
+        chats.add(TeamspeakChat.getServerChatId(this));
+
+        return chats;
+    }
+
+    @Override
+    public Collection<Chat> getChats() {
+        PlatformConnection connection = getPlatform().getConnection();
+        if (connection == null || !connection.isConnected())
+            return Collections.emptyList();
+        return getChatIds().stream().map(connection::getChat).collect(Collectors.toList());
+    }
+
+    @Override
+    public Collection<String> getPlatformUserIds() {
+        TeamspeakServerConnection connection = this.connection;
+        if (connection == null || !connection.isConnected()) return Collections.emptyList();
+        return connection.getClients().stream().map(client -> client.getUid().toBase64()).collect(Collectors.toList());
+    }
+
+    @Override
+    public Collection<PlatformUser> getPlatformUsers() {
+        PlatformConnection connection = getPlatform().getConnection();
+        if (connection == null || !connection.isConnected())
+            return Collections.emptyList();
+        return getPlatformUserIds().stream().map(connection::getPlatformUser).collect(Collectors.toList());
+    }
+
+    @Override
+    public Chat getDefaultChat() {
+        PlatformConnection connection = getPlatform().getConnection();
+        if (connection == null || !connection.isConnected())
+            return null;
+        return connection.getChat(TeamspeakChat.getServerChatId(this));
     }
 
     public int getIdleTimeout() {
@@ -127,6 +197,7 @@ public class TeamspeakServer extends TimedRow {
         return endpoint;
     }
 
+    @Override
     public boolean isConnected() {
         TeamspeakServerConnection connection = getConnection();
         return connection != null && connection.isConnected();

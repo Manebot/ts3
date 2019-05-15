@@ -2,6 +2,7 @@ package io.manebot.plugin.ts3.platform.chat;
 
 import io.manebot.chat.Chat;
 
+import io.manebot.chat.Community;
 import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.ts3.database.model.TeamspeakServer;
 import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;

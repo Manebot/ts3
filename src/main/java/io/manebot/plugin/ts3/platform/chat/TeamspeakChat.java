@@ -91,6 +91,12 @@ public abstract class TeamspeakChat implements Chat {
         return false;
     }
 
+
+    @Override
+    public Community getCommunity() {
+        return getServer();
+    }
+
     @Override
     public TextBuilder text() {
         return new TeamspeakTextBuilder(this);

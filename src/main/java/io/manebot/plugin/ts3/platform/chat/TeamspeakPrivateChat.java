@@ -4,6 +4,7 @@ import com.github.manevolent.ts3j.identity.Uid;
 import io.manebot.chat.BasicTextChatMessage;
 import io.manebot.chat.Chat;
 import io.manebot.chat.ChatMessage;
+import io.manebot.chat.Community;
 import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.ts3.database.model.TeamspeakServer;
 import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;

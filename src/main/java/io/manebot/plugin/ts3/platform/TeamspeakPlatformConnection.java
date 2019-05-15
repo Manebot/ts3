@@ -4,6 +4,7 @@ import com.github.manevolent.ts3j.identity.LocalIdentity;
 import com.github.manevolent.ts3j.identity.Uid;
 
 import io.manebot.chat.Chat;
+import io.manebot.chat.Community;
 import io.manebot.platform.AbstractPlatformConnection;
 import io.manebot.platform.Platform;
 import io.manebot.plugin.Plugin;
@@ -98,6 +99,11 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
         }
 
         return chat;
+    }
+
+    @Override
+    protected Community loadCommunityById(String id) {
+        return serverManager.getServer(id);
     }
 
     @Override
@@ -274,6 +280,16 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
                 .flatMap(connection -> connection.getChannels().stream())
                 .map(channel -> TeamspeakChannelChat.getChannelChatId(channel.getConnection().getServer(), channel))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Collection<String> getCommunityIds() {
+        return null;
+    }
+
+    @Override
+    public Collection<Community> getCommunities() {
+        return null;
     }
 
     public Stream<TeamspeakClient> findClients(Uid uid) {
