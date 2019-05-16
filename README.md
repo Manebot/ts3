@@ -55,10 +55,10 @@ plugin autoremove
 
 ### Dependencies
 
-The **Teamspeak3** plugin requires the following plugins at least be *installed*. Don't worry, if you don't have them installed, Manebot will automatically install them for you.
+The **Teamspeak3** plugin requires the following plugins at least be *installed*. Don't worry, if you don't have them installed, Manebot will automatically install them for you.  Maven magic.
 
-* io.manebot.plugins:audio
-* io.manebot.plugins:media
+* io.manebot.plugin:audio (or just "audio")
+* io.manebot.plugin:media (or just "media")
 
 ## Supported Features
 
