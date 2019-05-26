@@ -295,8 +295,8 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         }
 
         this.mixer = audioConnection.registerMixer(audio.createMixer(server.getId(), consumer -> {
-            consumer.addDefaultFilters();
             consumer.setFormat(48000f, 2);
+            consumer.addDefaultFilters();
         }));
 
         mixer.addSink(sink = new TeamspeakMixerSink(
