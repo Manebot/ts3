@@ -18,7 +18,7 @@ public class TeamspeakChatMessage extends BasicTextChatMessage {
 
         this.connection = connection;
         this.server = server;
-        this.message = rawMessage.replaceAll("\\[\\/?[A-z]]", "");
+        this.message = stripBBCode(rawMessage);
     }
 
     public TeamspeakPlatformConnection getPlatformConnection() {
@@ -78,4 +78,7 @@ public class TeamspeakChatMessage extends BasicTextChatMessage {
         }
     }
 
+    public static String stripBBCode(String rawMessage) {
+        return rawMessage.replaceAll("\\[\\/?[A-z]+\\]", "");
+    }
 }
