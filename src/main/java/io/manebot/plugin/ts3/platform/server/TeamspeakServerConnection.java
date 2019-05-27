@@ -29,6 +29,7 @@ import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;
 import io.manebot.plugin.ts3.platform.audio.TeamspeakAudioChannel;
 import io.manebot.plugin.ts3.platform.audio.TeamspeakMixerSink;
 import io.manebot.plugin.ts3.platform.chat.TeamspeakChat;
+import io.manebot.plugin.ts3.platform.chat.TeamspeakChatMessage;
 import io.manebot.plugin.ts3.platform.chat.TeamspeakChatSender;
 import io.manebot.plugin.ts3.platform.server.model.TeamspeakChannel;
 import io.manebot.plugin.ts3.platform.server.model.TeamspeakClient;
@@ -636,7 +637,12 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         }
 
         TeamspeakChatSender chatSender = new TeamspeakChatSender(user, chat);
-        ChatMessage chatMessage = new BasicTextChatMessage(chatSender, event.getMessage());
+        ChatMessage chatMessage = new TeamspeakChatMessage(
+                getPlatformConnection(),
+                getServer(),
+                chatSender,
+                event.getMessage()
+        );
         platformConnection.getPlugin().getBot().getChatDispatcher().executeAsync(chatMessage);
     }
 
