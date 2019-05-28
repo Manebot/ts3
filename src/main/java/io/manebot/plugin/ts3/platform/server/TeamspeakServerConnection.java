@@ -406,13 +406,23 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
     public TeamspeakChannel getLobbyChannel()
             throws IllegalArgumentException {
         if (server.getLobbyChannel() == null) return null;
-        return findChannelByName(server.getLobbyChannel());
+        String string = server.getLobbyChannel();
+        if (string.startsWith("id:")) {
+            return findChannelById(Integer.parseInt(string.substring(3)));
+        } else {
+            return findChannelByName(string);
+        }
     }
 
     public TeamspeakChannel getAwayChannel()
             throws IllegalArgumentException {
         if (server.getAwayChannel() == null) return null;
-        return findChannelByName(server.getAwayChannel());
+        String string = server.getAwayChannel();
+        if (string.startsWith("id:")) {
+            return findChannelById(Integer.parseInt(string.substring(3)));
+        } else {
+            return findChannelByName(string);
+        }
     }
 
     public TeamspeakClient findClient(Uid uid)
