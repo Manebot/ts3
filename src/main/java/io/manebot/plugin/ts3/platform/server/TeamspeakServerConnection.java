@@ -171,8 +171,16 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
             client.subscribeAll();
 
-            for (Channel channel : client.listChannels())
-                recognizeChannel(channel);
+            try {
+                for (Channel channel : client.listChannels())
+                    try {
+                        recognizeChannel(channel);
+                    } catch (Exception ex) {
+                        platformConnection.getPlugin().getLogger().log(Level.FINE, "Problem getting channel info", ex);
+                    }
+            } catch (Exception ex) {
+                platformConnection.getPlugin().getLogger().log(Level.FINE, "Problem getting client info", ex);
+            }
 
             for (Client basicClient : client.listClients()) {
                 Client info;
