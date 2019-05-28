@@ -22,7 +22,7 @@ public class TeamspeakPrivateChat extends TeamspeakChat implements Chat {
     public TeamspeakPrivateChat(TeamspeakPlatformConnection platformConnection,
                                 TeamspeakServer server,
                                 Uid uid) {
-        super(platformConnection, server, TeamspeakChat.getServerChatId(server));
+        super(platformConnection, server, TeamspeakChat.getPrivateChatId(server, uid));
         this.uid = uid;
     }
 
