@@ -2,6 +2,7 @@ package io.manebot.plugin.ts3.platform.server;
 
 import com.github.manevolent.ts3j.api.Channel;
 import com.github.manevolent.ts3j.api.Client;
+import com.github.manevolent.ts3j.api.ClientInfo;
 import com.github.manevolent.ts3j.api.ClientProperty;
 import com.github.manevolent.ts3j.event.*;
 import com.github.manevolent.ts3j.identity.Uid;
@@ -173,8 +174,18 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
             for (Channel channel : client.listChannels())
                 recognizeChannel(channel);
 
-            for (Client basicClient : client.listClients())
-                recognizeClient(client.getClientInfo(basicClient.getId()));
+            for (Client basicClient : client.listClients()) {
+                Client info;
+
+                try {
+                    info = client.getClientInfo(basicClient.getId());
+                } catch (Exception e) {
+                    platformConnection.getPlugin().getLogger().log(Level.FINE, "Problem getting client info", e);
+                    info = basicClient;
+                }
+
+                recognizeClient(info);
+            }
 
             if (recognizeClient(client.getClientInfo(client.getClientId())) == null)
                 throw new IllegalStateException("couldn't find self (clientId=" + client.getClientId() +")");
@@ -577,7 +588,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         TeamspeakClient client = findClientByUser(player.getOwner());
 
         try {
-            if (client != null) follow(client);
+            if (client != null && server.willFollow()) follow(client);
         } catch (IOException e) {
             // Do nothing
         }
@@ -660,7 +671,16 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
     public void onClientJoin(ClientJoinEvent clientJoinEvent) {
         try {
             if (client.getState() == ClientConnectionState.CONNECTED) {
-                Client client = this.client.getClientInfo(clientJoinEvent.getClientId());
+                Client client;
+
+                try {
+                    client = this.client.getClientInfo(clientJoinEvent.getClientId());
+                } catch (Exception e) {
+                    platformConnection.getPlugin().getLogger().log(Level.FINE, "Problem getting client info", e);
+
+                    client = new Client(clientJoinEvent.getMap());
+                }
+
                 TeamspeakClient teamspeakClient = recognizeClient(client);
 
                 // TODO: fire Manebot connection event, associate IP address for AdvancedBan (from my old bot)
@@ -737,6 +757,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                 if (players.stream().anyMatch(AudioPlayer::isBlocking)) // Follow them
                     try {
                         if (server.willFollow()) follow(teamspeakClient);
+                        else throw new IOException("user left channel"); // forces stop
                     } catch (IOException e) {
                         for (AudioPlayer player : players) player.stop();
                     }
