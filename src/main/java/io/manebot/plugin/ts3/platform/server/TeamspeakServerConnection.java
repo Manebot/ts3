@@ -509,7 +509,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         }
     }
 
-    public void follow(TeamspeakClient teamspeakClient) throws IOException {
+    public boolean follow(TeamspeakClient teamspeakClient) throws IOException {
         try {
             TeamspeakChannel other = teamspeakClient.getChannel();
             if (other == null) throw new NullPointerException("other");
@@ -518,6 +518,8 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
             TeamspeakChannel currentChannel = getCurrentChannel();
 
             if (currentChannel == null || currentChannel.getChannelId() != cid) {
+                if (!server.willFollow()) return false;
+
                 TeamspeakClient self = getSelf();
                 TeamspeakChannel oldChannel = self.getChannel();
 
@@ -532,7 +534,9 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                 TeamspeakChannel newChannel = findChannelById(cid);
                 if (newChannel != null)
                     newChannel.addClient(self);
-            }
+
+                return true;
+            } else return true;
         } catch (Exception ex) {
             throw new IOException(ex);
         }
@@ -828,9 +832,10 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
             recognizeChannel(new Channel(infoMap));
         } catch (Exception e) {
-            platformConnection.getPlugin().getLogger().log(Level.SEVERE,
-                    "Problem obtaining channel information for channel " +
-                            subscribedChannelId, e
+            platformConnection.getPlugin().getLogger().log(
+                    Level.FINE,
+                    "Problem obtaining channel information for channel " + subscribedChannelId,
+                    e
             );
         }
     }

@@ -284,12 +284,12 @@ public class TeamspeakPlatformConnection extends AbstractPlatformConnection {
 
     @Override
     public Collection<String> getCommunityIds() {
-        return null;
+        return getCommunities().stream().map(Community::getId).collect(Collectors.toList());
     }
 
     @Override
     public Collection<Community> getCommunities() {
-        return null;
+        return connections.stream().map(connection -> (Community) connection).collect(Collectors.toList());
     }
 
     public Stream<TeamspeakClient> findClients(Uid uid) {
