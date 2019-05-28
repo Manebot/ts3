@@ -73,6 +73,7 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
                 .item("Display Name", server.getDisplayName())
                 .item("Away Channel", server.getAwayChannel())
                 .item("Lobby Channel", server.getLobbyChannel())
+                .item("Follow Clients", server.willFollow())
                 .item("Idle Timeout (s)", Integer.toString(server.getIdleTimeout()))
         );
     }
@@ -174,7 +175,7 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
                     @CommandArgumentLabel.Argument(label = "set") String enable,
                     @CommandArgumentString.Argument(label = "id") String id,
                     @CommandArgumentSwitch.Argument(labels =
-                            {"away-channel","lobby-channel","password","nickname","idle-timeout"}) String propertyKey,
+                            {"away-channel","lobby-channel","password","nickname","idle-timeout","follow"}) String propertyKey,
                     @CommandArgumentFollowing.Argument() String value)
             throws CommandExecutionException {
         id = id.toLowerCase().trim();
@@ -195,7 +196,7 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
                       @CommandArgumentLabel.Argument(label = "unset") String disable,
                       @CommandArgumentString.Argument(label = "id") String id,
                       @CommandArgumentSwitch.Argument(labels =
-                              {"away-channel","lobby-channel","password","nickname","idle-timeout"}) String propertyKey)
+                              {"away-channel","lobby-channel","password","nickname","idle-timeout","follow"}) String propertyKey)
             throws CommandExecutionException {
         id = id.toLowerCase().trim();
 

@@ -55,6 +55,9 @@ public class TeamspeakServer extends TimedRow implements Community {
     @Column(nullable = true)
     private String awayChannel;
 
+    @Column(nullable = false)
+    private boolean follow = true;
+
     @Column()
     private boolean enabled = false;
 
@@ -325,5 +328,24 @@ public class TeamspeakServer extends TimedRow implements Community {
         });
 
         return serverConnection;
+    }
+
+    public void setFollow(boolean follow) {
+        if (this.follow != follow) {
+            try {
+                this.follow = database.executeTransaction(s -> {
+                    TeamspeakServer model = s.find(TeamspeakServer.class, teamspeakServerId);
+                    model.follow = false;
+                    model.setUpdated(System.currentTimeMillis());
+                    return false;
+                });
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    public boolean willFollow() {
+        return follow;
     }
 }

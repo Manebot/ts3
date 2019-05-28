@@ -84,7 +84,11 @@ public class TeamspeakAudioChannel extends AudioChannel {
                 if (teamspeakClient == null)
                     throw new IllegalArgumentException("You could not be found in Teamspeak.");
 
-                serverConnection.follow(teamspeakClient);
+                if (serverConnection.getServer().willFollow())
+                    serverConnection.follow(teamspeakClient);
+                else {
+                    throw new IllegalArgumentException("You are not in the same channel.");
+                }
             }
 
             return ownership;

@@ -736,7 +736,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
                 if (players.stream().anyMatch(AudioPlayer::isBlocking)) // Follow them
                     try {
-                        follow(teamspeakClient);
+                        if (server.willFollow()) follow(teamspeakClient);
                     } catch (IOException e) {
                         for (AudioPlayer player : players) player.stop();
                     }
