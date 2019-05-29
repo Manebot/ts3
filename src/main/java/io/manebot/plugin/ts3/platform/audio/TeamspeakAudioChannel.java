@@ -1,5 +1,6 @@
 package io.manebot.plugin.ts3.platform.audio;
 
+import com.github.manevolent.ts3j.command.CommandException;
 import com.github.manevolent.ts3j.identity.Uid;
 import io.manebot.conversation.Conversation;
 import io.manebot.platform.Platform;
@@ -84,8 +85,12 @@ public class TeamspeakAudioChannel extends AudioChannel {
                 if (teamspeakClient == null)
                     throw new IllegalArgumentException("You could not be found in Teamspeak.");
 
-                if (!serverConnection.follow(teamspeakClient))
-                    throw new IllegalArgumentException("You are not in the same channel.");
+                try {
+                    if (!serverConnection.follow(teamspeakClient))
+                        throw new IllegalArgumentException("You are not in the same channel.");
+                } catch (CommandException ex) {
+                    throw new IllegalArgumentException("Problem joining your channel: " + ex.getMessage());
+                }
             }
 
             return ownership;
