@@ -701,7 +701,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         try {
             if (client != null && server.willFollow()) follow(client);
         } catch (Exception e) {
-            // Do nothing
+            player.kill();
         }
     }
 
