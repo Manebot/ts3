@@ -2,7 +2,9 @@ package io.manebot.plugin.ts3.platform.server.model;
 
 import com.github.manevolent.ts3j.identity.Uid;
 import io.manebot.chat.Chat;
+import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.ts3.platform.server.TeamspeakServerConnection;
+import io.manebot.user.UserAssociation;
 
 public class TeamspeakClient {
     private final TeamspeakServerConnection connection;
@@ -26,6 +28,9 @@ public class TeamspeakClient {
     }
     public int getClientId() {
         return clientId;
+    }
+    public PlatformUser getPlatformUser() {
+        return getConnection().getPlatformUser(this);
     }
 
     public TeamspeakChannel getChannel() {

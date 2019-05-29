@@ -4,6 +4,7 @@ import com.github.manevolent.ts3j.api.Channel;
 import com.github.manevolent.ts3j.api.Client;
 import com.github.manevolent.ts3j.api.ClientInfo;
 import com.github.manevolent.ts3j.api.ClientProperty;
+import com.github.manevolent.ts3j.enums.CodecType;
 import com.github.manevolent.ts3j.event.*;
 import com.github.manevolent.ts3j.identity.Uid;
 import com.github.manevolent.ts3j.protocol.client.ClientConnectionState;
@@ -29,6 +30,8 @@ import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;
 
 import io.manebot.plugin.ts3.platform.audio.TeamspeakAudioChannel;
 import io.manebot.plugin.ts3.platform.audio.TeamspeakMixerSink;
+import io.manebot.plugin.ts3.platform.audio.voice.AudioFeedListener;
+import io.manebot.plugin.ts3.platform.audio.voice.VoiceListener;
 import io.manebot.plugin.ts3.platform.chat.TeamspeakChat;
 import io.manebot.plugin.ts3.platform.chat.TeamspeakChatMessage;
 import io.manebot.plugin.ts3.platform.chat.TeamspeakChatSender;
@@ -59,9 +62,6 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
     private final LocalTeamspeakClientSocket client;
 
-    // Action service (used to move clients)
-    private final ExecutorService actionService;
-
     private AudioChannel channel;
     private Mixer mixer;
     private Sleeper sleeper; // sleeper, used to move self to Lobby
@@ -70,6 +70,9 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
     // Client and channel lists
     private final Map<Integer, TeamspeakChannel> channels = new LinkedHashMap<>();
     private final Map<Integer, TeamspeakClient> clients = new LinkedHashMap<>();
+
+    // Provider maps
+    private final Map<Integer, VoiceListener> feeds = new LinkedHashMap<>();
 
     private boolean connecting, disconnecting;
 
@@ -83,7 +86,6 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         this.audioConnection = audioConnection;
 
         this.client = createClientSocket();
-        this.actionService = Executors.newCachedThreadPool(Virtual.getInstance().currentProcess().newThreadFactory());
     }
 
     public TeamspeakServer getServer() {
@@ -304,6 +306,13 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
         TeamspeakChannel channel = getLobbyChannel();
         if (channel != null) moveClient(getSelf(), channel);
+
+        client.setVoiceHandler((packet) -> onVoice(
+                packet.getCodecType(),
+                packet.getClientId(),
+                packet.getPacketId(),
+                packet.getCodecData())
+        );
     }
 
     private void registerAudio() {
@@ -340,6 +349,59 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
             disconnecting = false;
         else if (!connecting)
             server.connectAsync();
+    }
+
+    private void onVoice(CodecType codec,
+                         int clientId,
+                         int packetId,
+                         byte[] encodedData) {
+        try {
+            // Only decode OPUS
+            switch (codec) {
+                case OPUS_MUSIC:
+                case OPUS_VOICE:
+                    break;
+                default:
+                    return;
+            }
+
+            // get client id
+            if (clientId < 0) return;
+                // ensure we don't listen to ourselves (don't know how this could happen)
+            else if (clientId == client.getClientId()) return;
+
+            TeamspeakClient teamspeakClient = findClientById(clientId);
+
+            // Only listen to users
+            if (teamspeakClient == null) return;
+
+            boolean speaking = true;
+
+            // end of speech
+            if (encodedData == null || encodedData.length <= 0 ||
+                    teamspeakClient.getChannel() == null ||
+                    teamspeakClient.getChannelId() != teamspeakClient.getChannelId()) {
+                speaking = false;
+            }
+
+            if (speaking) {
+                // Get listener or create one
+                VoiceListener listener = feeds.get(clientId);
+                if (listener == null || listener.hasEnded())
+                    feeds.put(
+                            clientId,
+                            listener = new AudioFeedListener(channel, teamspeakClient, 48000, 2)
+                    );
+
+                // Receive audio
+                listener.receiveAsync(packetId, encodedData);
+            } else {
+                VoiceListener listener = feeds.remove(clientId);
+                if (listener != null) listener.endAsync();
+            }
+        } catch (Exception ex) {
+            Logger.getGlobal().log(Level.WARNING, "Problem processing Teamspeak voice packet", ex);
+        }
     }
 
     private void unregisterAudio() {
