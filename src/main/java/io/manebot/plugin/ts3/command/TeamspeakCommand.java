@@ -1,17 +1,24 @@
 package io.manebot.plugin.ts3.command;
 
+import com.github.manevolent.ts3j.command.CommandException;
 import io.manebot.chat.TextStyle;
 import io.manebot.command.CommandSender;
 import io.manebot.command.exception.CommandArgumentException;
 import io.manebot.command.exception.CommandExecutionException;
 import io.manebot.command.executor.chained.AnnotatedCommandExecutor;
 import io.manebot.command.executor.chained.argument.*;
+import io.manebot.conversation.Conversation;
+import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.Plugin;
 import io.manebot.plugin.ts3.database.model.TeamspeakServer;
 import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;
+import io.manebot.plugin.ts3.platform.chat.TeamspeakChat;
 import io.manebot.plugin.ts3.platform.server.ServerManager;
+import io.manebot.plugin.ts3.platform.server.model.TeamspeakClient;
+import io.manebot.plugin.ts3.platform.user.TeamspeakPlatformUser;
 import io.manebot.tuple.Pair;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.stream.Collectors;
@@ -23,6 +30,36 @@ public class TeamspeakCommand extends AnnotatedCommandExecutor {
     public TeamspeakCommand(Plugin plugin, ServerManager serverManager) {
         this.serverManager = serverManager;
         this.platformConnection = (TeamspeakPlatformConnection) plugin.getPlatformById("ts3").getConnection();
+    }
+
+    @Command(description = "Joins your channel", permission = "teamspeak.join")
+    public void join(CommandSender sender,
+                     @CommandArgumentLabel.Argument(label = "join") String join)
+            throws CommandExecutionException {
+        TeamspeakPlatformUser tsUser;
+        TeamspeakChat chat;
+
+        if (sender.getPlatformUser() instanceof TeamspeakPlatformUser) {
+            tsUser = (TeamspeakPlatformUser) sender.getPlatformUser();
+        } else throw new CommandArgumentException("This command isn't being run from Teamspeak.");
+
+        if (sender.getChat() instanceof TeamspeakChat) {
+            chat = (TeamspeakChat) sender.getChat();
+        } else throw new CommandArgumentException("This command isn't being run from Teamspeak.");
+
+        TeamspeakClient client = chat.getServer().getConnection().findClient(tsUser.getUid());
+        if (client == null || client.getChannel() == null)
+            throw new CommandArgumentException("Couldn't find you in Teamspeak. Can the bot subscribe to your channel?");
+
+        try {
+            chat.getServer().getConnection().join(client);
+        } catch (IOException e) {
+            throw new CommandExecutionException("Problem following Teamspeak client", e);
+        } catch (CommandException e) {
+            throw new CommandExecutionException(e.getMessage());
+        }
+
+        sender.sendMessage("(Joining channel)");
     }
 
     @Command(description = "Lists Teamspeak servers", permission = "teamspeak.identity.show")

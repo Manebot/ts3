@@ -4,6 +4,7 @@ import com.github.manevolent.ts3j.api.Channel;
 import com.github.manevolent.ts3j.api.Client;
 import com.github.manevolent.ts3j.api.ClientInfo;
 import com.github.manevolent.ts3j.api.ClientProperty;
+import com.github.manevolent.ts3j.command.CommandException;
 import com.github.manevolent.ts3j.enums.CodecType;
 import com.github.manevolent.ts3j.event.*;
 import com.github.manevolent.ts3j.identity.Uid;
@@ -14,6 +15,7 @@ import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSoc
 import io.manebot.chat.BasicTextChatMessage;
 import io.manebot.chat.Chat;
 import io.manebot.chat.ChatMessage;
+import io.manebot.command.exception.CommandExecutionException;
 import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.PluginException;
 import io.manebot.plugin.audio.Audio;
@@ -571,7 +573,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         }
     }
 
-    public boolean follow(TeamspeakClient teamspeakClient) throws IOException {
+    public boolean follow(TeamspeakClient teamspeakClient) throws CommandException, IOException {
         try {
             TeamspeakChannel other = teamspeakClient.getChannel();
             if (other == null) throw new NullPointerException("other");
@@ -599,8 +601,43 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
                 return true;
             } else return true;
-        } catch (Exception ex) {
-            throw new IOException(ex);
+        } catch (CommandException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException("Problem joining channel", e);
+        }
+    }
+
+    public boolean join(TeamspeakClient teamspeakClient) throws CommandException, IOException {
+        try {
+            TeamspeakChannel other = teamspeakClient.getChannel();
+            if (other == null) throw new NullPointerException("other");
+
+            int cid = other.getChannelId();
+            TeamspeakChannel currentChannel = getCurrentChannel();
+
+            if (currentChannel == null || currentChannel.getChannelId() != cid) {
+                TeamspeakClient self = getSelf();
+                TeamspeakChannel oldChannel = self.getChannel();
+
+                client.joinChannel(cid, null);
+
+                if (oldChannel != null)
+                    oldChannel.removeClient(self);
+
+                self.setChannelId(cid);
+                self.setChannel(findChannelById(cid));
+
+                TeamspeakChannel newChannel = findChannelById(cid);
+                if (newChannel != null)
+                    newChannel.addClient(self);
+
+                return true;
+            } else return true;
+        } catch (CommandException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException("Problem joining channel", e);
         }
     }
 
@@ -663,7 +700,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
         try {
             if (client != null && server.willFollow()) follow(client);
-        } catch (IOException e) {
+        } catch (Exception e) {
             // Do nothing
         }
     }
@@ -832,7 +869,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                     try {
                         if (server.willFollow()) follow(teamspeakClient);
                         else throw new IOException("user left channel"); // forces stop
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         for (AudioPlayer player : players) player.stop();
                     }
             }

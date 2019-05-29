@@ -22,6 +22,14 @@ public class TeamspeakPlatformUser implements PlatformUser {
         this.uid = uid;
     }
 
+    public Uid getUid() {
+        return uid;
+    }
+
+    public Collection<TeamspeakClient> getClients() {
+        return connection.findClients(uid).collect(Collectors.toList());
+    }
+
     public TeamspeakClient getLastActiveClient() {
         return connection.findClients(uid)
                 .max(Comparator.comparingLong(TeamspeakClient::getLastActivity))

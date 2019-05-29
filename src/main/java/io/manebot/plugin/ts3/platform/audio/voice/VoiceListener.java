@@ -20,9 +20,7 @@ public abstract class VoiceListener implements Runnable {
     private static final int OPUS_FRAME_TIME_MS = 20;
 
     private final TeamspeakClient client;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor(
-            Virtual.getInstance().currentProcess().newThreadFactory()
-    );
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final OpusDecoder decoder;
     private final float[] decoderBuffer;
 
