@@ -5,7 +5,7 @@
 
 This is the reference implementation of the **Teamspeak3** platform for **Manebot**, my multi-platform (where platform means chat platform) chatbot framework. You can use this plugin to get Manebot to interact with your Teamspeak3 server(s) The integration is completely seamless; simply install the Teamspeak3 plugin to Manebot, add some Teamspeak3 servers, and watch your existing plugins/features auto-magically work on the Teamspeak platform!  This plugin fully supports the Manebot audio system, meaning you can turn Manebot into a Teamspeak3 music bot with this plugin.
 
-The support for Teamspeak3 is provided through **ts3j**: https://github.com/Manevolent/ts3j
+The support for Teamspeak3 is provided through **ts3j**: https://github.com/Manevolent/ts3j.  TS3j is a **full client** protocol implementation; this means that Manebot can join a Teamspeak3 server **directly** as a visible client, without the need for Server Query.
 
 ## Manebot
 
