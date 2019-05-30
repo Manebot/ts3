@@ -80,7 +80,7 @@ public class TeamspeakAudioChannel extends AudioChannel {
         Ownership ownership = this.obtain(association);
 
         try {
-            if (getBlockingPlayers() <= 0 || isIdle()) {
+            if (getBlockingPlayers() <= 0 || isIdle() && association != null) {
                 TeamspeakClient teamspeakClient = serverConnection.findClient(new Uid(association.getPlatformId()));
                 if (teamspeakClient == null)
                     throw new IllegalArgumentException("You could not be found in Teamspeak.");
