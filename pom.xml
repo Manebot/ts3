@@ -84,7 +84,7 @@
         <dependency>
             <groupId>com.github.manevolent</groupId>
             <artifactId>ts3j</artifactId>
-            <version>a86381a47b</version>
+            <version>289aa31</version>
         </dependency>
 
         <dependency>
