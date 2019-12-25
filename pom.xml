@@ -44,7 +44,7 @@
 
     <groupId>io.manebot.plugin</groupId>
     <artifactId>ts3</artifactId>
-    <version>1.0.10.6</version>
+    <version>1.0.10.8-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -84,7 +84,7 @@
         <dependency>
             <groupId>com.github.manevolent</groupId>
             <artifactId>ts3j</artifactId>
-            <version>289aa31</version>
+            <version>475af91eefbb53b77b547944ac0aeee23eb66582</version>
         </dependency>
 
         <dependency>
