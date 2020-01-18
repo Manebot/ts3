@@ -11,6 +11,7 @@
             <url>https://maven.teamlixo.net/repository/public/</url>
             <releases>
                 <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
             </releases>
             <snapshots>
                 <enabled>true</enabled>
@@ -44,7 +45,7 @@
 
     <groupId>io.manebot.plugin</groupId>
     <artifactId>ts3</artifactId>
-    <version>1.0.10.8</version>
+    <version>1.0.10.10</version>
 
     <build>
         <plugins>
@@ -84,7 +85,7 @@
         <dependency>
             <groupId>com.github.manevolent</groupId>
             <artifactId>ts3j</artifactId>
-            <version>475af91eefbb53b77b547944ac0aeee23eb66582</version>
+            <version>1.0</version>
         </dependency>
 
         <dependency>
