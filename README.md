@@ -1,6 +1,6 @@
 <p align="center">
   <br/>
-  <a href="https://discord.gg/qJPzQX3"><img height="28" src="https://img.shields.io/discord/563010101254815776.svg?label=Discord&logo=discord&style=for-the-badge"></a> <img height="28" src="https://img.shields.io/github/issues/manevolent/manebot-discord.svg?style=for-the-badge">
+  <a href="https://discord.gg/qJPzQX3"><img height="28" src="https://img.shields.io/discord/563010101254815776.svg?label=Discord&logo=discord&style=for-the-badge"></a> <img height="28" src="https://img.shields.io/github/issues/manebot/manebot-discord.svg?style=for-the-badge">
 </p>
 
 This is the reference implementation of the **Teamspeak3** platform for **Manebot**, my multi-platform (where platform means chat platform) chatbot framework. You can use this plugin to get Manebot to interact with your Teamspeak3 server(s) The integration is completely seamless; simply install the Teamspeak3 plugin to Manebot, add some Teamspeak3 servers, and watch your existing plugins/features auto-magically work on the Teamspeak platform!  This plugin fully supports the Manebot audio system, meaning you can turn Manebot into a Teamspeak3 music bot with this plugin.
