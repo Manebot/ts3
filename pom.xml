@@ -7,8 +7,8 @@
     <repositories>
         <repository>
             <id>public</id>
-            <name>Team Lixo public release repository</name>
-            <url>https://maven.teamlixo.net/repository/public/</url>
+            <name>Manebot public release repository</name>
+            <url>https://repo.manebot.io/repository/public/</url>
             <releases>
                 <enabled>true</enabled>
                 <updatePolicy>always</updatePolicy>
@@ -32,14 +32,14 @@
     <distributionManagement>
         <repository>
             <id>public-releases</id>
-            <name>Team Lixo public release repository</name>
-            <url>https://maven.teamlixo.net/repository/public-releases/</url>
+            <name>Manebot public release repository</name>
+            <url>https://repo.manebot.io/repository/public-releases/</url>
             <uniqueVersion>true</uniqueVersion>
         </repository>
         <snapshotRepository>
             <id>private-snapshots</id>
-            <name>Team Lixo public release snapshots</name>
-            <url>https://maven.teamlixo.net/repository/public-snapshots/</url>
+            <name>Manebot public release snapshots</name>
+            <url>https://repo.manebot.io/repository/public-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
