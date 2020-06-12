@@ -9,7 +9,7 @@ The support for Teamspeak3 is provided through **ts3j**: https://github.com/Mane
 
 ## Manebot
 
-Manebot is a really neat plugin-based Java chatbot framework that allows you to write one "bot", and host it across several platforms. This plugin provides the **Discord** "*Platform*" to Manebot, which allows Manebot to seamlessly interact with Discord and provide all of the features your Manebot instance is set up to provide on Discord.
+Manebot is a really neat plugin-based Java chatbot framework that allows you to write one "bot", and host it across several platforms. This plugin provides the **Teamspeak** "*Platform*" to Manebot, which allows Manebot to seamlessly interact with any number of Teamspeak3 (and possibly 5) servers and provide all of the supported features your Manebot instance is set up to provide on Teamspeak.
 
 #### How do I make a bot with this?
 
