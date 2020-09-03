@@ -16,6 +16,7 @@ import io.manebot.chat.BasicTextChatMessage;
 import io.manebot.chat.Chat;
 import io.manebot.chat.ChatMessage;
 import io.manebot.command.exception.CommandExecutionException;
+import io.manebot.event.Event;
 import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.PluginException;
 import io.manebot.plugin.audio.Audio;
@@ -23,6 +24,7 @@ import io.manebot.plugin.audio.api.AudioConnection;
 
 import io.manebot.plugin.audio.channel.AudioChannel;
 import io.manebot.plugin.audio.channel.AudioChannelRegistrant;
+import io.manebot.plugin.audio.event.channel.AudioChannelUserJoinEvent;
 import io.manebot.plugin.audio.mixer.Mixer;
 
 import io.manebot.plugin.audio.opus.OpusParameters;
@@ -794,7 +796,10 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
                 TeamspeakClient teamspeakClient = recognizeClient(client);
 
-                // TODO: fire Manebot connection event, associate IP address for AdvancedBan (from my old bot)
+                if (teamspeakClient.getChannelId() == getSelf().getChannelId()) {
+                    Event event = new AudioChannelUserJoinEvent(this, audio, channel, teamspeakClient.getPlatformUser());
+                    getPlatformConnection().getPlugin().getBot().getEventDispatcher().executeAsync(event);
+                }
             }
         } catch (Exception e) {
             platformConnection.getPlugin().getLogger().log(
@@ -811,29 +816,20 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
     public void onClientLeave(ClientLeaveEvent clientLeaveEvent) {
         TeamspeakClient client = findClientById(clientLeaveEvent.getClientId());
 
+        // Reclaim our own nickname if it's been made available
         if (client != null
                 && client.getClientId() != getSelf().getClientId()
                 && client.getNickname().equalsIgnoreCase(server.getDisplayName())) {
             TeamspeakServerConnection.this.client.setNickname(server.getDisplayName());
         }
 
+        if (client != null && client.getChannelId() == getSelf().getChannelId()) {
+            Event event = new AudioChannelUserJoinEvent(this, audio, channel, client.getPlatformUser());
+            getPlatformConnection().getPlugin().getBot().getEventDispatcher().executeAsync(event);
+        }
+
         // Un-recognize from server
         unrecognizeClient(clientLeaveEvent.getClientId());
-
-        // Handle audio
-        if (client != null) {
-            User user = getUser(client);
-            if (user != null) {
-                if (channel != null) {
-                    List<AudioPlayer> players = channel.getPlayers()
-                            .stream()
-                            .filter(x -> x.getOwner().equals(user))
-                            .collect(Collectors.toList());
-
-                    players.forEach(AudioPlayer::stop);
-                }
-            }
-        }
     }
 
     @Override
@@ -865,13 +861,23 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                         .filter(x -> x.getOwner().equals(user))
                         .collect(Collectors.toList());
 
-                if (players.stream().anyMatch(AudioPlayer::isBlocking)) // Follow them
-                    try {
-                        if (server.willFollow()) follow(teamspeakClient);
-                        else throw new IOException("user left channel"); // forces stop
-                    } catch (Exception e) {
-                        for (AudioPlayer player : players) player.stop();
-                    }
+                boolean followed;
+                try {
+                    if (server.willFollow() && players.stream().anyMatch(AudioPlayer::isBlocking))
+                        followed = follow(teamspeakClient);
+                    else
+                        followed = false;
+                } catch (Exception ex) {
+                    Logger.getGlobal().log(Level.WARNING, "Problem following " + teamspeakClient.getNickname()
+                            + " into channel " + newChannel);
+
+                    followed = false;
+                }
+
+                if (!followed && oldChannel != null && oldChannel.getChannelId() == getSelf().getChannelId()) {
+                    Event event = new AudioChannelUserJoinEvent(this, audio, channel, teamspeakClient.getPlatformUser());
+                    getPlatformConnection().getPlugin().getBot().getEventDispatcher().executeAsync(event);
+                }
             }
         }
     }
@@ -903,10 +909,21 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         TeamspeakClient client = findClientById(clientId);
         if (client != null) {
             String outputMuted = clientUpdatedEvent.get(ClientProperty.CLIENT_OUTPUT_MUTED);
-            if (outputMuted != null) client.setListening(!outputMuted.equals("1"));
+            if (outputMuted != null) {
+                client.setListening(!outputMuted.equals("1"));
+            }
 
             String nickname = clientUpdatedEvent.get(ClientProperty.CLIENT_NICKNAME);
-            if (nickname != null && nickname.length() > 0) client.setNickname(nickname);
+            if (nickname != null && nickname.length() > 0) {
+                // Reclaim our own nickname if it's been made available
+                if (client.getClientId() != getSelf().getClientId()
+                        && client.getNickname().equalsIgnoreCase(server.getDisplayName())
+                        && !nickname.equalsIgnoreCase(server.getDisplayName())) {
+                    TeamspeakServerConnection.this.client.setNickname(server.getDisplayName());
+                }
+
+                client.setNickname(nickname);
+            }
         }
     }
 

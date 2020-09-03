@@ -45,4 +45,9 @@ public class TeamspeakChannel {
     public TeamspeakServerConnection getConnection() {
         return connection;
     }
+
+    @Override
+    public String toString() {
+        return getChannelId() + "/" + getName();
+    }
 }
