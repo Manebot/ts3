@@ -15,6 +15,7 @@ import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSoc
 import io.manebot.chat.BasicTextChatMessage;
 import io.manebot.chat.Chat;
 import io.manebot.chat.ChatMessage;
+import io.manebot.chat.Community;
 import io.manebot.command.exception.CommandExecutionException;
 import io.manebot.event.Event;
 import io.manebot.platform.PlatformUser;
