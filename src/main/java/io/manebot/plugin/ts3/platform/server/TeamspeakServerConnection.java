@@ -2,7 +2,6 @@ package io.manebot.plugin.ts3.platform.server;
 
 import com.github.manevolent.ts3j.api.Channel;
 import com.github.manevolent.ts3j.api.Client;
-import com.github.manevolent.ts3j.api.ClientInfo;
 import com.github.manevolent.ts3j.api.ClientProperty;
 import com.github.manevolent.ts3j.command.CommandException;
 import com.github.manevolent.ts3j.enums.CodecType;
@@ -12,11 +11,8 @@ import com.github.manevolent.ts3j.protocol.client.ClientConnectionState;
 
 import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSocket;
 
-import io.manebot.chat.BasicTextChatMessage;
 import io.manebot.chat.Chat;
 import io.manebot.chat.ChatMessage;
-import io.manebot.chat.Community;
-import io.manebot.command.exception.CommandExecutionException;
 import io.manebot.event.Event;
 import io.manebot.platform.PlatformUser;
 import io.manebot.plugin.PluginException;
@@ -25,7 +21,9 @@ import io.manebot.plugin.audio.api.AudioConnection;
 
 import io.manebot.plugin.audio.channel.AudioChannel;
 import io.manebot.plugin.audio.channel.AudioChannelRegistrant;
-import io.manebot.plugin.audio.event.channel.AudioChannelUserJoinEvent;
+import io.manebot.plugin.audio.event.channel.AudioChannelUserConnectedEvent;
+import io.manebot.plugin.audio.event.channel.AudioChannelUserDisconnectedEvent;
+import io.manebot.plugin.audio.event.channel.AudioChannelUserMoveEvent;
 import io.manebot.plugin.audio.mixer.Mixer;
 
 import io.manebot.plugin.audio.opus.OpusParameters;
@@ -798,7 +796,23 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                 TeamspeakClient teamspeakClient = recognizeClient(client);
 
                 if (teamspeakClient.getChannelId() == getSelf().getChannelId()) {
-                    Event event = new AudioChannelUserJoinEvent(this, audio, channel, teamspeakClient.getPlatformUser());
+                    Event event = new AudioChannelUserConnectedEvent(
+                            this,
+                            audio,
+                            channel,
+                            teamspeakClient.getPlatformUser(),
+                            teamspeakClient.getChannelId() == getSelf().getChannel().getChannelId(),
+                            () -> {
+                                try {
+                                    follow(teamspeakClient);
+                                } catch (Exception e) {
+                                    throw new RuntimeException("Failed to follow Teamspeak client " +
+                                            teamspeakClient.getNickname() + " into channel " +
+                                            teamspeakClient.getChannel().getName(), e);
+                                }
+                            }
+                    );
+
                     getPlatformConnection().getPlugin().getBot().getEventDispatcher().executeAsync(event);
                 }
             }
@@ -825,7 +839,14 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
         }
 
         if (client != null && client.getChannelId() == getSelf().getChannelId()) {
-            Event event = new AudioChannelUserJoinEvent(this, audio, channel, client.getPlatformUser());
+            Event event = new AudioChannelUserDisconnectedEvent(
+                    this,
+                    audio,
+                    channel,
+                    client.getPlatformUser(),
+                    client.getChannelId() == getSelf().getChannel().getChannelId()
+            );
+
             getPlatformConnection().getPlugin().getBot().getEventDispatcher().executeAsync(event);
         }
 
@@ -854,32 +875,30 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
             if (newChannel != null)
                 newChannel.addClient(teamspeakClient);
 
+            boolean joined = newChannel != null && newChannel.getChannelId() == getSelf().getChannel().getChannelId();
+            boolean left = oldChannel != null && oldChannel.getChannelId() == getSelf().getChannel().getChannelId();
+
             // Handle the audio part
-            User user = getUser(teamspeakClient);
-            if (user != null) {
-                List<AudioPlayer> players = channel.getPlayers()
-                        .stream()
-                        .filter(x -> x.getOwner().equals(user))
-                        .collect(Collectors.toList());
+            Event event = new AudioChannelUserMoveEvent(
+                    this,
+                    audio,
+                    channel,
+                    channel,
+                    teamspeakClient.getPlatformUser(),
+                    joined,
+                    left,
+                    () -> {
+                        try {
+                            follow(teamspeakClient);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to follow Teamspeak client " +
+                                    teamspeakClient.getNickname() + " into channel " +
+                                    teamspeakClient.getChannel().getName(), e);
+                        }
+                    }
+            );
 
-                boolean followed;
-                try {
-                    if (server.willFollow() && players.stream().anyMatch(AudioPlayer::isBlocking))
-                        followed = follow(teamspeakClient);
-                    else
-                        followed = false;
-                } catch (Exception ex) {
-                    Logger.getGlobal().log(Level.WARNING, "Problem following " + teamspeakClient.getNickname()
-                            + " into channel " + newChannel);
-
-                    followed = false;
-                }
-
-                if (!followed && oldChannel != null && oldChannel.getChannelId() == getSelf().getChannelId()) {
-                    Event event = new AudioChannelUserJoinEvent(this, audio, channel, teamspeakClient.getPlatformUser());
-                    getPlatformConnection().getPlugin().getBot().getEventDispatcher().executeAsync(event);
-                }
-            }
+            getPlatformConnection().getPlugin().getBot().getEventDispatcher().executeAsync(event);
         }
     }
 
