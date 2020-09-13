@@ -795,7 +795,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
                 TeamspeakClient teamspeakClient = recognizeClient(client);
 
-                if (teamspeakClient.getChannelId() == getSelf().getChannelId()) {
+                if (teamspeakClient.getChannel().equals(getCurrentChannel())) {
                     Event event = new AudioChannelUserConnectedEvent(
                             this,
                             audio,

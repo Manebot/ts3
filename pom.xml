@@ -45,7 +45,7 @@
 
     <groupId>io.manebot.plugin</groupId>
     <artifactId>ts3</artifactId>
-    <version>1.0.12</version>
+    <version>1.0.12.1</version>
 
     <build>
         <plugins>
