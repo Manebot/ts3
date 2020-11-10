@@ -895,7 +895,8 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                                     teamspeakClient.getNickname() + " into channel " +
                                     teamspeakClient.getChannel().getName(), e);
                         }
-                    }
+                    },
+                    false
             );
 
             getPlatformConnection().getPlugin().getBot().getEventDispatcher().executeAsync(event);
