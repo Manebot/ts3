@@ -383,7 +383,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
             // end of speech
             if (encodedData == null || encodedData.length <= 0 ||
                     teamspeakClient.getChannel() == null ||
-                    teamspeakClient.getChannelId() != teamspeakClient.getChannelId()) {
+                    teamspeakClient.getChannelId() != getSelf().getChannelId()) {
                 speaking = false;
             }
 

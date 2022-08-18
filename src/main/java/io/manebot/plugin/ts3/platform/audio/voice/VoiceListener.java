@@ -7,6 +7,7 @@ import io.manebot.plugin.ts3.platform.server.model.TeamspeakClient;
 import io.manebot.virtual.Virtual;
 
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -40,7 +41,7 @@ public abstract class VoiceListener implements Runnable {
     public VoiceListener(TeamspeakClient client, int sampleRate, int channels) throws IOException {
         this.client = client;
 
-        this.sampleRate = 16000;
+        this.sampleRate = sampleRate;
         this.channels = channels;
         this.frameSize = (sampleRate / (1000 / OPUS_FRAME_TIME_MS));
 
@@ -144,7 +145,13 @@ public abstract class VoiceListener implements Runnable {
     }
 
     public Future<?> receiveAsync(int packetId, byte[] data) {
-        return executorService.submit(() -> receive(packetId, data));
+        synchronized (watcherLock) {
+            if (!ended) {
+                return executorService.submit(() -> receive(packetId, data));
+            } else {
+                return CompletableFuture.completedFuture(null);
+            }
+        }
     }
 
     public void end() {
@@ -188,7 +195,13 @@ public abstract class VoiceListener implements Runnable {
     }
 
     public Future<?> endAsync() {
-        return executorService.submit(this::end);
+        synchronized (watcherLock) {
+            if (!ended) {
+                return executorService.submit(this::end);
+            } else {
+                return CompletableFuture.completedFuture(null);
+            }
+        }
     }
 
     @Override

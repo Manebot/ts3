@@ -150,4 +150,9 @@ public class AudioFeedListener extends VoiceListener implements AudioProvider {
     public void close() throws IOException {
         end();
     }
+
+    @Override
+    public String toString() {
+        return "Feed{" + getClient().getNickname() + "}";
+    }
 }

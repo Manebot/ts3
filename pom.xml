@@ -8,7 +8,7 @@
         <repository>
             <id>public</id>
             <name>Manebot public release repository</name>
-            <url>https://repo.manebot.io/repository/public/</url>
+            <url>http://172.31.13.98:8999/repository/public/</url>
             <releases>
                 <enabled>true</enabled>
                 <updatePolicy>always</updatePolicy>
@@ -21,7 +21,7 @@
         <repository>
             <id>tomp2p.net</id>
             <name>tomp2p</name>
-            <url>http://tomp2p.net/dev/mvn/</url>
+            <url>https://tomp2p.net/dev/mvn/</url>
         </repository>
         <repository>
             <id>jitpack.io</id>
@@ -33,19 +33,19 @@
         <repository>
             <id>public-releases</id>
             <name>Manebot public release repository</name>
-            <url>https://repo.manebot.io/repository/public-releases/</url>
+            <url>http://172.31.13.98:8999/repository/public-releases/</url>
             <uniqueVersion>true</uniqueVersion>
         </repository>
         <snapshotRepository>
             <id>private-snapshots</id>
             <name>Manebot public release snapshots</name>
-            <url>https://repo.manebot.io/repository/public-snapshots/</url>
+            <url>http://172.31.13.98:8999/repository/public-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
     <groupId>io.manebot.plugin</groupId>
     <artifactId>ts3</artifactId>
-    <version>1.0.12.2</version>
+    <version>1.0.13-SNAPSHOT</version>
 
     <build>
         <plugins>
