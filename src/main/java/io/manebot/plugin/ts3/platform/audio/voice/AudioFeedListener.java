@@ -10,7 +10,7 @@ import io.manebot.user.UserAssociation;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-public class AudioFeedListener extends VoiceListener implements AudioProvider {
+public class AudioFeedListener extends OpusListener implements AudioProvider {
     private final AudioChannel channel;
     private final float[] buffer;
     private int position = 0;

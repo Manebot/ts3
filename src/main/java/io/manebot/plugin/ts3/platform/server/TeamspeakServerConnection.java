@@ -34,7 +34,7 @@ import io.manebot.plugin.ts3.platform.TeamspeakPlatformConnection;
 import io.manebot.plugin.ts3.platform.audio.TeamspeakAudioChannel;
 import io.manebot.plugin.ts3.platform.audio.TeamspeakMixerSink;
 import io.manebot.plugin.ts3.platform.audio.voice.AudioFeedListener;
-import io.manebot.plugin.ts3.platform.audio.voice.VoiceListener;
+import io.manebot.plugin.ts3.platform.audio.voice.OpusListener;
 import io.manebot.plugin.ts3.platform.chat.TeamspeakChat;
 import io.manebot.plugin.ts3.platform.chat.TeamspeakChatMessage;
 import io.manebot.plugin.ts3.platform.chat.TeamspeakChatSender;
@@ -75,7 +75,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
     private final Map<Integer, TeamspeakClient> clients = new LinkedHashMap<>();
 
     // Provider maps
-    private final Map<Integer, VoiceListener> feeds = new LinkedHashMap<>();
+    private final Map<Integer, OpusListener> feeds = new LinkedHashMap<>();
 
     private boolean connecting, disconnecting;
 
@@ -389,7 +389,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
 
             if (speaking) {
                 // Get listener or create one
-                VoiceListener listener = feeds.get(clientId);
+                OpusListener listener = feeds.get(clientId);
                 if (listener == null || listener.hasEnded())
                     feeds.put(
                             clientId,
@@ -399,7 +399,7 @@ public class TeamspeakServerConnection implements AudioChannelRegistrant, TS3Lis
                 // Receive audio
                 listener.receiveAsync(packetId, encodedData);
             } else {
-                VoiceListener listener = feeds.remove(clientId);
+                OpusListener listener = feeds.remove(clientId);
                 if (listener != null) listener.endAsync();
             }
         } catch (Exception ex) {

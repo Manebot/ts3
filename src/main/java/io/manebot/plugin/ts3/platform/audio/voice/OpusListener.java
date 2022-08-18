@@ -4,7 +4,6 @@ import com.github.manevolent.ts3j.protocol.socket.client.AbstractTeamspeakClient
 
 import io.manebot.plugin.audio.opus.OpusDecoder;
 import io.manebot.plugin.ts3.platform.server.model.TeamspeakClient;
-import io.manebot.virtual.Virtual;
 
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
@@ -14,7 +13,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public abstract class VoiceListener implements Runnable {
+public abstract class OpusListener implements Runnable {
     private final int sampleRate;
     private final int channels;
     private final int frameSize;
@@ -38,7 +37,7 @@ public abstract class VoiceListener implements Runnable {
                     (1000 / OPUS_FRAME_TIME_MS) * 31
             ); // 31 second window (1550 packets)
 
-    public VoiceListener(TeamspeakClient client, int sampleRate, int channels) throws IOException {
+    public OpusListener(TeamspeakClient client, int sampleRate, int channels) throws IOException {
         this.client = client;
 
         this.sampleRate = sampleRate;
