@@ -78,7 +78,7 @@
         <dependency>
             <groupId>io.manebot.plugin</groupId>
             <artifactId>media</artifactId>
-            <version>0.2.7</version>
+            <version>0.2.10</version>
             <scope>provided</scope>
         </dependency>
 
